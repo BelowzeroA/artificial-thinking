@@ -1,0 +1,30 @@
+{
+  "layout": {
+    "neurons": [
+      {
+        "id": "in",
+        "pattern": "in"
+      },
+      {
+        "id": "out",
+        "pattern": "out"
+      }
+    ],
+    "synapses": [
+      {
+        "source": "in",
+        "target": "out",
+        "inhibitory": false,
+        "weight": 0.5
+      }
+    ]
+  },
+  "samples": [
+    {
+      "input": [
+        "in"
+      ],
+      "output": "out"
+    }
+  ]
+}

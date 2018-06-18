@@ -1,0 +1,63 @@
+{
+  "layout": {
+    "neurons": [
+      {
+        "id": "in1",
+        "pattern": "in 1"
+      },
+      {
+        "id": "in2",
+        "pattern": "in 2"
+      },
+      {
+        "id": "inter1",
+        "pattern": "inter 1"
+      },
+      {
+        "id": "out",
+        "pattern": "out"
+      }
+    ],
+    "synapses": [
+      {
+        "source": "in1",
+        "target": "out",
+        "inhibitory": false,
+        "weight": 0.5
+      },
+      {
+        "source": "in2",
+        "target": "inter1",
+        "inhibitory": false,
+        "weight": 0.5
+      },
+      {
+        "source": "inter1",
+        "target": "out",
+        "inhibitory": false,
+        "weight": 0.5
+      }
+    ]
+  },
+  "samples": [
+    {
+      "input": [
+        "in1",
+        "in2"
+      ],
+      "output": "out"
+    },
+    {
+      "input": [
+        "in1"
+      ],
+      "output": "~out"
+    },
+    {
+      "input": [
+        "in2"
+      ],
+      "output": "~out"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+1
+2
+3
+1 plus 2 is 3
+2 plus 3 is 5
+2 plus 2 is 4
