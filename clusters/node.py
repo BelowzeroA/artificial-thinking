@@ -8,12 +8,36 @@ class Node:
         self.container = container
         self.abstract = abstract
         self.is_sequence = is_sequence
+        self.potential = 0
+        self.threshold = 1
+        self.fired = False
+        self.firing = False
         self.input = []
         self.output = []
 
 
-    def update_state(self):
-        pass
+    def update(self):
+        if self._is_synthesizer():
+            return
+        self.fired = False
+        if self.potential >= self.threshold:
+            self.firing = True
+
+        if self.firing:
+            self.fired = True
+            self.firing = False
+            out_synapses = self.container.get_outgoing_connections(self)
+            for synapse in out_synapses:
+                synapse.pulsing = True
+        self.potential = 0
+
+
+    def _is_synthesizer(self):
+        return self.pattern.startswith('synth:')
+
+
+    def fire(self):
+        self.potential = 1
 
 
     def _repr(self):

@@ -28,14 +28,26 @@ class Network:
 
 
     def _run_interaction_batch(self, batch):
-        walker = Walker(self.container)
+        signalling_nodes = []
         for line in batch:
-            self._run_interaction_line(walker, line)
+            nodes = self._run_interaction_line(line)
+            signalling_nodes.extend(nodes)
+        if len(batch) > 1:
+            self._create_batch_node(list(set(signalling_nodes)))
 
 
-    def _run_interaction_line(self, walker, line):
+    def _create_batch_node(self, nodes):
+        combining_node = self._create_combining_node(nodes, abstract=True)
+
+
+    def _run_interaction_line(self, line):
         nodes = self._create_nodes(line)
-        walker.run(nodes)
+        walker = Walker(self.container)
+        signalling_nodes = walker.run(nodes)
+        there_is_abstract = len([1 for node in signalling_nodes if node.abstract]) > 0
+        if there_is_abstract:
+            signalling_nodes = [node for node in signalling_nodes if node.abstract]
+        return signalling_nodes
 
 
     def _create_nodes(self, line):
@@ -59,9 +71,12 @@ class Network:
         return nodes
 
 
-    def _create_combining_node(self, nodes):
+    def _create_combining_node(self, nodes, abstract=False):
+        if len(nodes) < 2:
+            return None
         pattern = ' '.join([self._clear_prefix(node.pattern) for node in nodes if not self._is_visual(node.pattern)])
-        node = Node(self.container.next_node_id(), pattern, self.container)
+        there_is_visual = len([1 for node in nodes if self._is_visual(node.pattern)]) > 0
+        node = Node(self.container.next_node_id(), pattern, self.container, abstract=abstract or not there_is_visual)
         self.container.append_node(node)
         for input_node in nodes:
             self.container.make_connection(input_node, node)

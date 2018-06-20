@@ -29,6 +29,10 @@ class Container:
         self.connections.append(conn)
 
 
+    def get_outgoing_connections(self, node):
+        return [conn for conn in self.connections if conn.source == node]
+
+
     def make_connection(self, source, target):
         conn = Connection(source=source, target=target)
         self.connections.append(conn)
