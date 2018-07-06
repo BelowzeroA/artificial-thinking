@@ -2,16 +2,12 @@ import random
 from clusters.network import Network
 
 
-# random.seed(43)
-
-
 def main():
-    net = Network()
-    net.run_interactions('./data/stage1.txt')
-    net.sleep()
-    net.save_layout('./data/stage1.json')
 
-    # net.run_tests(verbose=False)
+    net = Network()
+    net.load_layout('./data/stage1.json')
+    net.run_interactions('./data/stage2.txt')
+    net.save_layout('./data/stage2.json')
     # success = 0
     # iter_count = 1
     # for i in range(iter_count):

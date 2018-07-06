@@ -1,0 +1,13 @@
+[v:duck duck]
+
+[v:dog dog]
+
+dog say bark
+
+duck say quack
+
+cow says mooo
+
+what does dog say?synth:bark
+
+what does cow say?synth:mooo

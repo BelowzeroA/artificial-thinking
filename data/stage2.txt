@@ -1,0 +1,8 @@
+v:fish
+what is it?synth:fish
+
+v:bird
+what is it?synth:bird
+
+v:cow
+what is it?synth:cow

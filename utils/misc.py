@@ -3,6 +3,8 @@ def split_list_in_batches(lines):
     batches = []
     current_batch = []
     for line in lines:
+        if line.startswith('test:'):
+            continue
         if line:
             current_batch.append(line)
         else:
