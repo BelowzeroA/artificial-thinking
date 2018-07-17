@@ -26,7 +26,11 @@ class Connection:
         self.fingerprint = fp
 
 
-    def update(self):
+    def get_opposite_connection(self):
+        return self.container.get_connection(source=self.target, target=self.source)
+
+
+    def update0(self):
         if self.pulsing:
             opposite = self.container.get_connection(source=self.target, target=self.source)
             opposite_pulsed = opposite and opposite.pulsed
@@ -42,11 +46,23 @@ class Connection:
             self.pulsing = False
 
 
+    def update(self):
+        if self.pulsing:
+            opposite = self.container.get_connection(source=self.target, target=self.source)
+            opposite_pulsed = opposite and opposite.pulsed
+            self.pulsed = True
+            if not opposite_pulsed:
+                self.target.potential += 1
+                self.target.input_nodes.add(self.source)
+                self.target.causal_connections.append(self)
+            self.pulsing = False
+
+
     def serialize(self):
         _dict = {
             'source': self.source.nid,
-            'target': self.target.nid,
-            'fingerprint': ' '.join([str(port) for port in self.fingerprint])
+            'target': self.target.nid
+            # 'fingerprint': ' '.join([str(port) for port in self.fingerprint])
         }
         return _dict
 

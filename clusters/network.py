@@ -3,6 +3,7 @@ from clusters.hyper_parameters import FINGERPRINT_LENGTH
 from clusters.memory_consolidator import MemoryConsolidator
 from clusters.node import Node
 from clusters.reinforce_trainer import ReinforceTrainer
+from clusters.urge_resolver import UrgeResolver
 from clusters.walker import Walker
 from utils.file_ops import load_list_from_file
 from utils.json_serializer import json_serialize
@@ -86,18 +87,33 @@ class Network:
 
     def _run_interaction_batch(self, batch):
         signalling_nodes = []
-        is_reinforcement = len([line for line in batch if '?' in line]) > 0
+        is_urge = len([line for line in batch if line.endswith('?')]) > 0
+        is_reinforcement = not is_urge and len([line for line in batch if '?' in line]) > 0
+        first_order_nodes = []
         for line in batch:
-            if '?' in line:
+            if line.endswith('?'):
+                self._run_urge_line(line, first_order_nodes)
+            elif '?' in line:
                 self._run_reinforcement_line(line, signalling_nodes)
             else:
                 if is_reinforcement:
                     nodes = self._create_nodes(line)
+                    signalling_nodes.extend(nodes)
                 else:
-                    nodes = self._run_interaction_line(line)
-                signalling_nodes.extend(nodes)
+                    nodes, second_order_signaled_nodes = self._run_interaction_line(line)
+                    signalling_nodes.extend(second_order_signaled_nodes)
+                    first_order_nodes.extend(nodes)
+
         if len(batch) > 1 and not is_reinforcement:
             self._create_batch_node(list(set(signalling_nodes)))
+
+
+    def _run_urge_line(self, line, signalling_nodes):
+        nodes = self._create_nodes(line)
+        signalling_nodes.extend(nodes)
+        resolver = UrgeResolver(self.container)
+        result = resolver.run(signalling_nodes)
+        return result
 
 
     def _create_batch_node(self, nodes):
@@ -128,7 +144,7 @@ class Network:
         # there_is_abstract = len([1 for node in signalling_nodes if node.abstract]) > 0
         # if there_is_abstract:
         #     signalling_nodes = [node for node in signalling_nodes if node.abstract]
-        return signalling_nodes
+        return nodes, signalling_nodes
 
 
     def _run_reinforcement_line(self, line, signalling_nodes):
@@ -180,6 +196,9 @@ class Network:
             self.container.make_connection(input_node, node)
             if not input_node.is_visual() and not input_node.is_auditory():
                 self.container.make_connection(node, input_node)
+            synth_node = self.container.get_node_by_pattern('synth:' + input_node.pattern)
+            if synth_node:
+                self.container.make_connection(node, synth_node)
         return node
 
 
@@ -223,12 +242,13 @@ class Network:
             return node
         node = Node(self.container.next_node_id(), pattern, self.container, abstract=True)
         self.container.append_node(node)
-        adjacent_nodes = [conn.target for conn in self.container.get_outgoing_connections(source_node)]
+        adjacent_nodes = [conn.target for conn in self.container.get_outgoing_connections(source_node)
+                          if conn.target.is_entity()]
         for adjacent_node in adjacent_nodes:
             self.container.make_connection(adjacent_node, node)
             self.container.make_connection(node, adjacent_node)
             adjacent_2nd_nodes = [conn.target for conn in self.container.get_outgoing_connections(adjacent_node)
-                                  if conn.target not in [source_node, node]]
+                                  if conn.target not in [source_node, node] and conn.target.is_entity()]
             for adjacent_2nd_node in adjacent_2nd_nodes:
                 self.container.make_connection(adjacent_2nd_node, node)
                 self.container.make_connection(node, adjacent_2nd_node)
@@ -254,6 +274,8 @@ class Network:
         synth_node = Node(self.container.next_node_id(), pattern, self.container)
         self.container.make_connection(node, synth_node)
         self.container.append_node(synth_node)
+        self.container.make_connection(synth_node, self.container.synth_node)
+        self.container.make_connection(self.container.synth_node, synth_node)
 
 
     def _check_create_node(self, entity):

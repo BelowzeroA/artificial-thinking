@@ -9,7 +9,7 @@ class NetworkRunner:
         self.fired_nodes = []
 
 
-    def reset(self):
+    def reset(self, input_nodes=False, firing_history=False):
         for conn in self.container.connections:
             conn.pulsed = False
             conn.pulsing = False
@@ -17,4 +17,8 @@ class NetworkRunner:
             node.fired = False
             node.firing = False
             node.potential = 0
+            if input_nodes:
+                node.input_nodes.clear()
+            if firing_history:
+                node.firing_history.clear()
 

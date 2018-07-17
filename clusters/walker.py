@@ -34,7 +34,7 @@ class Walker(NetworkRunner):
 
     def update_state(self):
         for node in self.container.nodes:
-            node.update()
+            node.update(self.current_tick)
             if node.fired:
                 self.fired_nodes.append(node)
 

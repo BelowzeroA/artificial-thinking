@@ -11,6 +11,13 @@ class Container:
         self.connections = []
         self.reinforcement_mode = False
         self.consolidation_mode = False
+        self.urge_mode = False
+        self._create_synth_node()
+
+
+    def _create_synth_node(self):
+        self.synth_node = Node(self.next_node_id(), 'synth abstract', container=self, abstract=True)
+        self.append_node(self.synth_node)
 
 
     def get_node_by_pattern(self, pattern):
@@ -76,15 +83,37 @@ class Container:
         with open(filename, 'r', encoding='utf-8') as data_file:
             entries = json.load(data_file)
 
-        for entry in self.entries['nodes']:
-            node = Node(id=entry['id'], pattern=entry['patterns'][0], container=self)
-            if 'abstract' in entry:
-                node.abstract = entry['abstract']
-            self.nodes.append(node)
+        for entry in entries['nodes']:
+            node = self.get_node_by_pattern(entry['pattern'])
+            if not node:
+                node = Node(nid=entry['id'], pattern=entry['pattern'], container=self)
+                node.abstract = self._read_property(entry, 'abstract', False)
+                node.is_episode = self._read_property(entry, 'episode', False)
+                self.nodes.append(node)
 
-        for entry in self.entries['connections']:
+        for entry in [entry for entry in entries['nodes'] if 'remembered_patterns' in entry]:
+            node = self.get_node_by_id(entry['id'])
+            for pattern in entry['remembered_patterns']:
+                self._append_firing_pathway(node, pattern)
+
+        for entry in entries['connections']:
             source_node = self.get_node_by_id(entry['source'])
             target_node = self.get_node_by_id(entry['target'])
-            connection = Connection(source=source_node, target=target_node, container=self)
-            connection.weight = entry['weight']
-            self.connections.append(connection)
+            self.make_connection(source=source_node, target=target_node)
+
+
+    def _append_firing_pathway(self, node, pattern):
+        inputs = []
+        output = self.get_node_by_id(pattern[2])
+        ids = pattern[1].split(',')
+        for id in ids:
+            inputs.append(self.get_node_by_id(id.strip()))
+        node.firing_pathways.append({'inputs': inputs, 'output': output})
+
+
+    @staticmethod
+    def _read_property(entry, prop_name, default_value=''):
+        if prop_name in entry:
+            return entry[prop_name]
+        else:
+            return default_value

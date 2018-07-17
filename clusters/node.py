@@ -1,6 +1,5 @@
 import random
 
-from clusters.hyper_parameters import FINGERPRINT_LENGTH
 
 # random.seed(43)
 
@@ -22,19 +21,23 @@ class Node:
         self.input_nodes = set()
         self.output = []
         self.firing_history = []
+        self.firing_energy = 0
         self.remembered_patterns = []
+        self.firing_pathways = []
         self.causal_connections = []
 
 
-    def update(self):
+    def update(self, current_tick):
         if self.container.reinforcement_mode:
-            self.update_reinforcement_mode()
+            self.update_reinforcement_mode(current_tick)
         elif self.container.consolidation_mode:
-            if self._is_synthesizer():
+            if self.is_synthesizer():
                 return
             self.update_consolidation_mode()
+        elif self.container.urge_mode:
+            self.update_urge_mode()
         else:
-            if self._is_synthesizer():
+            if self.is_synthesizer():
                 return
             self.update_learning_mode()
 
@@ -61,23 +64,69 @@ class Node:
         return False
 
 
-    def update_reinforcement_mode(self):
-        likelihood = self._get_firing_likelihood()
-        margin = int(100 * likelihood)
-        rand_val = random.randint(1, 100)
-        if rand_val > margin:
-            return
+    def update_reinforcement_mode(self, current_tick):
+        if self.firing_energy == 0:
+            likelihood = self._get_firing_likelihood_reinforcement_mode()
+            self.potential = 0
+            margin = int(100 * likelihood)
+            rand_val = random.randint(1, 100)
+            if rand_val > margin:
+                return
+            self.firing_energy = random.choice([1, 1, 2, 3])
+        self.firing_energy -= 1
+        self.firing_energy = max(0, self.firing_energy)
         self.firing = True
         self.fired = True
         if len(self.output) > 0:
-            output = random.choice(self.output)
-            output.pulsing = True
-            self.firing_history.append((output, list(self.input_pattern), self.input_nodes))
+            outputs = self._get_pulsing_outputs()
+            for conn in outputs:
+                opposite = conn.get_opposite_connection()
+                if not opposite or not opposite.pulsed:
+                    conn.pulsing = True
+        self.firing_history.append(
+            {'tick': current_tick, 'energy': self.firing_energy, 'output': outputs, 'input': self.input_nodes})
+
+
+    def update_urge_mode(self):
+        if self.is_special() and self.potential > 0:
+            connections = self.container.get_outgoing_connections(self)
+            for connection in connections:
+                connection.pulsing = True
+        else:
+            pathways = self._get_matching_pathway()
+            for pathway in pathways:
+                self.firing = True
+                self.fired = True
+                connection = self.container.get_connection(source=self, target=pathway['output'])
+                connection.pulsing = True
+            self.potential = 0
+
+
+    def _get_matching_pathway(self):
+        matched_pathways = []
+        for pathway in self.firing_pathways:
+            pathway_size = len(pathway['inputs'])
+            intersection = [node for node in pathway['inputs'] if node in self.input_nodes]
+            if len(intersection) == pathway_size:
+                matched_pathways.append(pathway)
+        return matched_pathways
+
+
+    def _get_pulsing_outputs(self):
+        # return self.output
+        output_size = len(self.output)
+        if output_size == 1:
+            return self.output
+        result_set_size = int(output_size / 2) + 1
+        result = set()
+        while len(result) < result_set_size:
+            result.add(random.choice(self.output))
+        return list(result)
 
 
     def update_consolidation_mode(self):
         if not self.firing:
-            likelihood = self._get_firing_likelihood_consolidation_mode()
+            likelihood = self._get_firing_likelihood()
             margin = int(100 * likelihood)
             rand_val = random.randint(1, 100)
             if rand_val > margin:
@@ -92,22 +141,29 @@ class Node:
         self.firing = False
 
 
-    def _get_firing_likelihood(self):
-        inp_len = len(self.input_pattern)
-        if inp_len == 0:
+    def _get_firing_likelihood_reinforcement_mode(self):
+        if self.is_visual() and self.potential == 1:
+            return 1.0
+        if self.potential == 0.0:
             return 0.0
-        incoming_connections_count = len(self.container.get_incoming_connections(self))
-        if inp_len == 1:
-            if incoming_connections_count == 1:
-                return 0.5
-            else:
-                return 0.05
-        if inp_len == 2:
-            return 0.4
-        return 1.0
+        elif self._there_is_visual_input():
+            return 1.0
+        elif self.potential == 1:
+            return 0.05
+        elif self.potential == 2:
+            return 0.8
+        else:
+            return 1.0
 
 
-    def _get_firing_likelihood_consolidation_mode(self):
+    def _there_is_visual_input(self):
+        visual_node = self.container.get_node_by_pattern('v:' + self.pattern)
+        if not visual_node:
+            return False
+        return visual_node in self.input_nodes
+
+
+    def _get_firing_likelihood(self):
         if self.potential == 0.0:
             return 0.0
         elif self.potential == 1:
@@ -123,7 +179,7 @@ class Node:
         self.input_nodes.add(connection.source.nid)
 
 
-    def _is_synthesizer(self):
+    def is_synthesizer(self):
         return self.pattern.startswith('synth:')
 
 
@@ -134,6 +190,7 @@ class Node:
     def fire_output(self):
         if len(self.output) == 0:
             raise BaseException('No outputs for node ' + self.pattern)
+        self.potential = 1
         for connection in self.output:
             connection.pulsing = True
 
@@ -141,14 +198,24 @@ class Node:
     def set_reward(self, target_node):
         if self.is_visual() or self.is_auditory():
             return
-        if self.firing_history:
-            last_shot = self.firing_history[len(self.firing_history) - 1]
-            self.remembered_patterns.append((self._make_input_pattern_to_store(last_shot[1], target_node), target_node.nid))
-        else:
-            self.remembered_patterns.append((self._make_input_pattern_to_store(self.input_pattern, target_node), 'dummy'))
+        last_shot = self.firing_history[len(self.firing_history) - 1]
+        for shot in self.firing_history:
+            self._append_to_remembered_pattern(shot, target_node)
 
 
-    def _make_input_pattern_to_store(self, raw_pattern, target_node):
+    def _append_to_remembered_pattern(self, shot, target_node):
+        target_node_name = target_node.nid if target_node else 'dummy'
+        self.remembered_patterns.append((shot['tick'],
+                                         self._make_input_pattern_to_store(shot['input'],
+                                                                           target_node), target_node_name))
+
+    def _make_input_pattern_to_store(self, inputs, target_node):
+        # opposite_connection = self.container.get_connection(target_node, self)
+        # if opposite_connection:
+        return ', '.join([str(node.nid) for node in inputs if node != target_node])
+
+
+    def _make_input_pattern_to_store0(self, raw_pattern, target_node):
         pattern = list(raw_pattern)
         opposite_connection = self.container.get_connection(target_node, self)
         if opposite_connection:
@@ -197,11 +264,14 @@ class Node:
 
 
     def serialize(self):
-        _dict = {'id': self.nid }
+        _dict = {'id': self.nid}
         if self.is_episode:
             _dict['episode'] = True
+        if self.abstract:
+            _dict['abstract'] = True
         if self.pattern:
             _dict['pattern'] = self.pattern
         if self.remembered_patterns:
+            self.remembered_patterns.sort(key=lambda x: x[0])
             _dict['remembered_patterns'] = self.remembered_patterns
         return _dict
