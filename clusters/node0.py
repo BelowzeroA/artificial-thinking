@@ -70,48 +70,83 @@ class Node:
 
 
     def update_reinforcement_mode(self, current_tick):
-        circuits = self._ensure_circuits()
-        fired = False
-        for circuit in circuits:
-            circuit.update(current_tick)
-            fired = circuit.fired or fired
-        self.potential = 0
-        if fired:
+        likelihood = self._get_firing_likelihood_reinforcement_mode()
+        self._update_circuits()
+        if self.firing_energy == 0:
+            if likelihood > 0:
+                patterns = [ptrn for ptrn in self.remembered_patterns if self._input_patterns_match(ptrn['inputs'], self.input_nodes)]
+                if patterns:
+                    self._process_update_with_patterns(patterns, likelihood, current_tick)
+                    self.potential = 0
+                    return
+            self.potential = 0
+            margin = int(100 * likelihood)
+            rand_val = random.randint(1, 100)
+            if rand_val > margin:
+                return
+            self.firing_energy = random.choice([1, 1, 2, 2, 3])
+            self.prev_input_nodes = list(self.input_nodes)
+
+        self._on_fire_common_reinforcement_mode(current_tick)
+
+
+    def _process_update_with_patterns(self, patterns, likelihood, current_tick):
+        for pattern in patterns:
+            circuit = self.get_circuit(self.input_nodes, pattern['output'])
+            if circuit and circuit.fired:
+                circuit.fired = False
+                self.firing_history.append(
+                    {'tick': current_tick, 'energy': circuit.firing_energy, 'output': circuit.output,
+                     'input': self.input_nodes})
+                continue
+
+            coefficient = math.sqrt(pattern['rate'])
+            margin = int(100 * likelihood * coefficient)
+            rand_val = random.randint(1, 100)
+            if rand_val > margin:
+                continue
+            connection = self.container.get_connection(source=self, target=pattern['output'])
+            if connection:
+                opposite = connection.get_opposite_connection()
+                if not opposite or not opposite.pulsed:
+                    connection.pulsing = True
             self.firing = True
             self.fired = True
-        self.input_nodes.clear()
+            self.firing_history.append(
+                {'tick': current_tick, 'energy': self.firing_energy, 'output': [connection], 'input': self.input_nodes})
 
 
-    def _ensure_circuits(self):
-        result = []
-        if len(self.input_nodes) > 0:
-            outgoing = self.container.get_outgoing_connections(self)
-            for conn in outgoing:
-                circuit = self._ensure_circuit(conn.target)
-                if circuit:
-                    result.append(circuit)
+    def _update_circuits(self):
         for circuit in self.circuits:
-            if circuit.firing_energy > 0 and circuit not in result:
-                result.append(circuit)
-        return result
+            circuit.update()
 
 
-    def _ensure_circuit(self, output_node):
-        circuits = [c for c in self.circuits if c.matches_input(self.input_nodes) and c.output_node == output_node]
-        if circuits:
-            return circuits[0]
-        if output_node in self.input_nodes:
-            return None
-        circuit = Circuit(node=self, output_node=output_node)
-        self.circuits.append(circuit)
-        return circuit
+    def _on_fire_common_reinforcement_mode(self, current_tick):
+        self.firing_energy -= 1
+        self.firing_energy = max(0, self.firing_energy)
+        self.firing = True
+        self.fired = True
+        if len(self.output) > 0:
+            outputs = self._get_pulsing_outputs()
+            for conn in outputs:
+                opposite = conn.get_opposite_connection()
+                if not opposite or not opposite.pulsed:
+                    conn.pulsing = True
+        if not self.is_perceptual():
+            self._create_circuits(outputs)
+        self.firing_history.append(
+            {'tick': current_tick, 'energy': self.firing_energy, 'output': outputs, 'input': self.input_nodes})
 
 
-    def get_firing_history(self):
-        result = []
-        for circuit in self.circuits:
-            result.extend(circuit.firing_history)
-        return result
+    def _create_circuits(self, outputs):
+        for output in outputs:
+            pattern = self._make_pattern_for_circuit(output.target)
+            circuit = self._get_circuit_by_pattern(pattern)
+            if not circuit:
+                circuit = Circuit(pattern=pattern, node=self)
+                circuit.firing_energy = self.firing_energy
+                circuit.output = output.target
+                self.circuits.append(circuit)
 
 
     @staticmethod
@@ -145,12 +180,6 @@ class Node:
     def get_circuit(self, inputs, output):
         pattern = self.make_pattern_for_circuit(inputs, output)
         return self._get_circuit_by_pattern(pattern)
-
-
-    def clear_firing_history(self):
-        for circuit in self.circuits:
-            circuit.firing_history.clear()
-            circuit.firing_energy = 0
 
 
     def _get_matching_pathway(self):
@@ -192,7 +221,22 @@ class Node:
         self.firing = False
 
 
-    def there_is_visual_input(self):
+    def _get_firing_likelihood_reinforcement_mode(self):
+        if self.is_visual() and self.potential == 1:
+            return 1.0
+        if self.potential == 0.0:
+            return 0.0
+        elif self._there_is_visual_input():
+            return 1.0
+        elif self.potential == 1:
+            return 0.05
+        elif self.potential == 2:
+            return 0.8
+        else:
+            return 1.0
+
+
+    def _there_is_visual_input(self):
         visual_node = self.container.get_node_by_pattern('v:' + self.pattern)
         if not visual_node:
             return False
@@ -246,6 +290,8 @@ class Node:
                                                                            target_node), target_node_name))
 
     def _make_input_pattern_to_store(self, inputs, target_node):
+        # opposite_connection = self.container.get_connection(target_node, self)
+        # if opposite_connection:
         return ', '.join([str(node.nid) for node in inputs if node != target_node])
 
 

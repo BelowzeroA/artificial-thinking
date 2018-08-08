@@ -11,14 +11,6 @@ def main():
 
     net.load_layout('./data/stage2.json')
     net.run_interactions('./data/stage2_test.txt')
-    # success = 0
-    # iter_count = 1
-    # for i in range(iter_count):
-    #     result = test_network()
-    #     if result:
-    #         success += 1
-    #
-    # print('test accuracy: {}%'.format(success / iter_count * 100))
 
 
 def test_network():

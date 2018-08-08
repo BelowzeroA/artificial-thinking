@@ -17,6 +17,7 @@ class NetworkRunner:
             node.fired = False
             node.firing = False
             node.potential = 0
+            node.firing_energy = 0
             if input_nodes:
                 node.input_nodes.clear()
             if firing_history:

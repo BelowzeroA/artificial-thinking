@@ -51,7 +51,7 @@ class ReinforceTrainer(NetworkRunner):
         patterns_wo_energy.sort(key=lambda item: item[0])
         patterns_wo_energy = list(self._accumulate(patterns_wo_energy))
         patterns_wo_energy.sort(key=lambda item: item[1], reverse=True)
-        mean = patterns_wo_energy[0][1] / 2
+        mean = patterns_wo_energy[0][1] / 2.5
         for (pattern, weight) in patterns_wo_energy:
             node = self.container.get_node_by_id(self._node_id_from_pattern(pattern))
             inputs, output = self._inputs_outputs_from_pattern(pattern)
@@ -62,11 +62,7 @@ class ReinforceTrainer(NetworkRunner):
 
 
     def _upgrade_circuit(self, circuit, weight, pattern_list, pattern):
-        if weight >= 1:
-            circuit.weight += 0.1
-        else:
-            circuit.weight -= 0.1
-        circuit.weight = max(0, circuit.weight)
+        circuit.weight = weight
         patterns_with_energy = [p for p in pattern_list if self._pattern_without_energy(p[0]) == pattern]
         total = 0
         count = 0
@@ -74,7 +70,7 @@ class ReinforceTrainer(NetworkRunner):
             total += int(self._energy_from_pattern(pattern)) * rate
             count += rate
         average = total / count
-        circuit.fixed_firing_energy = round(average)
+        circuit.firing_energy = round(average * math.sqrt(len(patterns_with_energy)))
 
 
     @staticmethod
@@ -129,15 +125,15 @@ class ReinforceTrainer(NetworkRunner):
         return '{}({}): {} - {}'.format(tree_rec['node'].nid, tree_rec['energy'], inputs, target_nid)
 
 
-    def _reinforce_loop(self, num_trains=20):
+    def _reinforce_loop(self, num_trains=10):
         self.target_achieved = False
-        self._clear_firing_history()
         for _ in range(num_trains):
             self._run_train()
             if self.target_achieved:
                 break
 
         if self.target_achieved:
+            # self.distribute_reward()
             return self._connection_tree(self.initial_nodes, self.target_nodes)
         return None
 
@@ -146,8 +142,7 @@ class ReinforceTrainer(NetworkRunner):
         visited_connections = []
         tree = []
         for node in target_nodes:
-            firing_history = node.get_firing_history()
-            max_tick = firing_history[len(firing_history) - 1]['tick']
+            max_tick = node.firing_history[len(node.firing_history) - 1]['tick']
             self._connection_tree_step(node, None, tree, initial_nodes, visited_connections, max_tick)
 
         initial_nodes = list(initial_nodes)
@@ -162,34 +157,25 @@ class ReinforceTrainer(NetworkRunner):
             return None
 
 
-    def _clear_firing_history(self):
-        for node in self.container.nodes:
-            node.clear_firing_history()
-
-
     def _connection_tree_step(self, node, target_node, tree, initial_nodes, visited_connections, max_tick):
         history = []
         if target_node:
-            firing_history = node.get_firing_history()
+            firing_history = list(node.firing_history)
             firing_history.sort(key=lambda item: item['tick'], reverse=True)
             for rec in firing_history:
-                if rec['tick'] <= max_tick and target_node == rec['output']:
+                if rec['tick'] <= max_tick and target_node in [c.target for c in rec['output']]:
                     history.append(rec)
                     break
         else:
-            history = [rec for rec in node.get_firing_history() if rec['tick'] == max_tick]
+            history = [rec for rec in node.firing_history if rec['tick'] == max_tick]
         for rec in history:
             rec = dict(rec)
             rec['node'] = node
             rec['target'] = target_node
-            # rec['output'] = [connection.target for connection in rec['output'] if connection]
+            rec['output'] = [connection.target for connection in rec['output'] if connection]
             tree.append(rec)
 
-        if len(history) == 0:
-            return
-
-        input_nodes = history[0]['input']
-        for incoming_node in input_nodes:
+        for incoming_node in node.input_nodes:
             conn_presentation = self._connection_presentation(incoming_node, node)
             if conn_presentation not in visited_connections and incoming_node not in initial_nodes:
                 visited_connections.append(conn_presentation)
@@ -241,7 +227,6 @@ class ReinforceTrainer(NetworkRunner):
                 self.fired_nodes.append(node)
                 if node in self.target_nodes:
                     self.target_achieved = True
-                    break
 
         if not self.target_achieved:
             for connection in self.container.connections:
