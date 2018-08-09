@@ -33,7 +33,7 @@
       "id": "8",
       "episode": true,
       "abstract": true,
-      "pattern": "fish mom"
+      "pattern": "mom fish"
     },
     {
       "id": "9",
@@ -55,7 +55,7 @@
       "id": "13",
       "episode": true,
       "abstract": true,
-      "pattern": "bird mom"
+      "pattern": "mom bird"
     },
     {
       "id": "14",
@@ -99,7 +99,7 @@
       "id": "23",
       "episode": true,
       "abstract": true,
-      "pattern": "bunny mom"
+      "pattern": "mom bunny"
     },
     {
       "id": "24",
@@ -122,19 +122,19 @@
       "id": "28",
       "episode": true,
       "abstract": true,
-      "pattern": "what is it fish mom"
+      "pattern": "what is it mom fish"
     },
     {
       "id": "29",
       "episode": true,
       "abstract": true,
-      "pattern": "bird what is it mom"
+      "pattern": "what is it mom bird"
     },
     {
       "id": "30",
       "episode": true,
       "abstract": true,
-      "pattern": "cow what is it mom"
+      "pattern": "cow mom what is it"
     },
     {
       "id": "31",
@@ -173,6 +173,14 @@
       "target": "7"
     },
     {
+      "source": "3",
+      "target": "8"
+    },
+    {
+      "source": "8",
+      "target": "3"
+    },
+    {
       "source": "6",
       "target": "8"
     },
@@ -183,14 +191,6 @@
     {
       "source": "8",
       "target": "7"
-    },
-    {
-      "source": "3",
-      "target": "8"
-    },
-    {
-      "source": "8",
-      "target": "3"
     },
     {
       "source": "9",
@@ -213,6 +213,14 @@
       "target": "12"
     },
     {
+      "source": "3",
+      "target": "13"
+    },
+    {
+      "source": "13",
+      "target": "3"
+    },
+    {
       "source": "11",
       "target": "13"
     },
@@ -223,14 +231,6 @@
     {
       "source": "13",
       "target": "12"
-    },
-    {
-      "source": "3",
-      "target": "13"
-    },
-    {
-      "source": "13",
-      "target": "3"
     },
     {
       "source": "14",
@@ -293,6 +293,14 @@
       "target": "22"
     },
     {
+      "source": "3",
+      "target": "23"
+    },
+    {
+      "source": "23",
+      "target": "3"
+    },
+    {
       "source": "21",
       "target": "23"
     },
@@ -303,14 +311,6 @@
     {
       "source": "23",
       "target": "22"
-    },
-    {
-      "source": "3",
-      "target": "23"
-    },
-    {
-      "source": "23",
-      "target": "3"
     },
     {
       "source": "24",
@@ -333,6 +333,14 @@
       "target": "27"
     },
     {
+      "source": "3",
+      "target": "28"
+    },
+    {
+      "source": "28",
+      "target": "3"
+    },
+    {
       "source": "6",
       "target": "28"
     },
@@ -345,11 +353,19 @@
       "target": "7"
     },
     {
-      "source": "3",
-      "target": "28"
+      "source": "27",
+      "target": "29"
     },
     {
-      "source": "28",
+      "source": "29",
+      "target": "27"
+    },
+    {
+      "source": "3",
+      "target": "29"
+    },
+    {
+      "source": "29",
       "target": "3"
     },
     {
@@ -365,22 +381,6 @@
       "target": "12"
     },
     {
-      "source": "27",
-      "target": "29"
-    },
-    {
-      "source": "29",
-      "target": "27"
-    },
-    {
-      "source": "3",
-      "target": "29"
-    },
-    {
-      "source": "29",
-      "target": "3"
-    },
-    {
       "source": "16",
       "target": "30"
     },
@@ -393,20 +393,20 @@
       "target": "17"
     },
     {
-      "source": "27",
-      "target": "30"
-    },
-    {
-      "source": "30",
-      "target": "27"
-    },
-    {
       "source": "3",
       "target": "30"
     },
     {
       "source": "30",
       "target": "3"
+    },
+    {
+      "source": "27",
+      "target": "30"
+    },
+    {
+      "source": "30",
+      "target": "27"
     },
     {
       "source": "8",
@@ -517,20 +517,20 @@
       "target": "28"
     },
     {
-      "source": "6",
-      "target": "32"
-    },
-    {
-      "source": "32",
-      "target": "6"
-    },
-    {
       "source": "3",
       "target": "32"
     },
     {
       "source": "32",
       "target": "3"
+    },
+    {
+      "source": "6",
+      "target": "32"
+    },
+    {
+      "source": "32",
+      "target": "6"
     },
     {
       "source": "31",

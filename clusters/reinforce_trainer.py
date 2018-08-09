@@ -27,7 +27,7 @@ class ReinforceTrainer(NetworkRunner):
 
 
     def _run_reinforce_train(self):
-        max_cycles = 500
+        max_cycles = 100
         accumulated_patterns = {}
         tree_complete_counter = 0
         for _ in range(max_cycles):
@@ -42,7 +42,7 @@ class ReinforceTrainer(NetworkRunner):
                     else:
                         accumulated_patterns[pattern] = 1
         pattern_list = [(key, accumulated_patterns[key]) for key in accumulated_patterns]
-        pattern_list.sort(key=lambda item:item[1], reverse=True)
+        pattern_list.sort(key=lambda item: item[1], reverse=True)
         self._process_patterns(pattern_list)
 
 
@@ -147,6 +147,8 @@ class ReinforceTrainer(NetworkRunner):
         tree = []
         for node in target_nodes:
             firing_history = node.get_firing_history()
+            if not firing_history:
+                return None
             max_tick = firing_history[len(firing_history) - 1]['tick']
             self._connection_tree_step(node, None, tree, initial_nodes, visited_connections, max_tick)
 
@@ -182,7 +184,6 @@ class ReinforceTrainer(NetworkRunner):
             rec = dict(rec)
             rec['node'] = node
             rec['target'] = target_node
-            # rec['output'] = [connection.target for connection in rec['output'] if connection]
             tree.append(rec)
 
         if len(history) == 0:
@@ -227,7 +228,6 @@ class ReinforceTrainer(NetworkRunner):
         node.set_reward(target_node)
         visited_nodes.append(node)
         for incoming_node in node.input_nodes:
-            # incoming_node = self.container.get_node_by_id(incoming_node_id)
             if incoming_node not in visited_nodes:
                 self._reward_node(incoming_node, node, visited_nodes)
 

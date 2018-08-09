@@ -8,7 +8,10 @@ from clusters.circuit import Circuit
 
 
 class Node:
-
+    """
+    Represents Ensemble entity, a basic brain macro-structure
+    Consists of neural circuits
+    """
     def __init__(self, nid, pattern, container, is_sequence=False, abstract=False):
         self.pattern = pattern
         self.nid = nid
@@ -143,7 +146,7 @@ class Node:
 
 
     def get_circuit(self, inputs, output):
-        pattern = self.make_pattern_for_circuit(inputs, output)
+        pattern = Circuit.make_pattern(inputs, output)
         return self._get_circuit_by_pattern(pattern)
 
 
@@ -231,19 +234,19 @@ class Node:
             connection.pulsing = True
 
 
-    def set_reward(self, target_node):
-        if self.is_visual() or self.is_auditory():
-            return
-        last_shot = self.firing_history[len(self.firing_history) - 1]
-        for shot in self.firing_history:
-            self._append_to_remembered_pattern(shot, target_node)
+    # def set_reward(self, target_node):
+    #     if self.is_visual() or self.is_auditory():
+    #         return
+    #     last_shot = self.firing_history[len(self.firing_history) - 1]
+    #     for shot in self.firing_history:
+    #         self._append_to_remembered_pattern(shot, target_node)
 
 
-    def _append_to_remembered_pattern(self, shot, target_node):
-        target_node_name = target_node.nid if target_node else 'dummy'
-        self.remembered_patterns.append((shot['tick'],
-                                         self._make_input_pattern_to_store(shot['input'],
-                                                                           target_node), target_node_name))
+    # def _append_to_remembered_pattern(self, shot, target_node):
+    #     target_node_name = target_node.nid if target_node else 'dummy'
+    #     self.remembered_patterns.append((shot['tick'],
+    #                                      self._make_input_pattern_to_store(shot['input'],
+    #                                                                        target_node), target_node_name))
 
     def _make_input_pattern_to_store(self, inputs, target_node):
         return ', '.join([str(node.nid) for node in inputs if node != target_node])
@@ -254,23 +257,23 @@ class Node:
         return '{} - {}'.format(pattern, output.nid)
 
 
-    def make_pattern_for_circuit(self, input_nodes, output):
-        pattern = ', '.join([str(node.nid) for node in input_nodes])
-        return '{} - {}'.format(pattern, output.nid if output else '')
+    # def make_pattern_for_circuit(self, input_nodes, output):
+    #     pattern = ', '.join([str(node.nid) for node in input_nodes])
+    #     return '{} - {}'.format(pattern, output.nid if output else '')
 
 
-    def _make_input_pattern_to_store0(self, raw_pattern, target_node):
-        pattern = list(raw_pattern)
-        opposite_connection = self.container.get_connection(target_node, self)
-        if opposite_connection:
-            pattern = [item for item in raw_pattern if item != opposite_connection]
-        fingerprint = set()
-        for connection in pattern:
-            fingerprint.update(connection.fingerprint)
-        # ints = [int(item) for item in list(fingerprint)]
-        ints = [int(c.source.nid) for c in pattern]
-        ints.sort()
-        return ' '.join([str(item) for item in ints])
+    # def _make_input_pattern_to_store0(self, raw_pattern, target_node):
+    #     pattern = list(raw_pattern)
+    #     opposite_connection = self.container.get_connection(target_node, self)
+    #     if opposite_connection:
+    #         pattern = [item for item in raw_pattern if item != opposite_connection]
+    #     fingerprint = set()
+    #     for connection in pattern:
+    #         fingerprint.update(connection.fingerprint)
+    #     # ints = [int(item) for item in list(fingerprint)]
+    #     ints = [int(c.source.nid) for c in pattern]
+    #     ints.sort()
+    #     return ' '.join([str(item) for item in ints])
 
 
     def is_auditory(self):

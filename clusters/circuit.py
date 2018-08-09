@@ -3,12 +3,21 @@ import random
 
 
 class Circuit:
-
+    """
+    Represents a Circuit entity:
+    1) Circuit is a part of a Node
+    2) responsible for precise connecting of nodes: maps input nodes to an output node
+    3) used in reinforcement mode and urge mode
+    """
     def __init__(self, node, output_node):
+        """
+        :param node: a node this circuit belongs to
+        :param output_node: an output node
+        """
         self.node = node
         self.container = node.container
         self.input_nodes = list(node.input_nodes)
-        self.input_pattern = self._get_input_pattern(self.input_nodes)
+        self.input_pattern = Circuit.get_input_pattern(self.input_nodes)
         self.output_node = output_node
         self.__firing_energy = 0
         self.pattern_firing_energy = 0
@@ -16,11 +25,16 @@ class Circuit:
         self.weight = 1
         self.fired = False
         self.firing_history = []
-        self.pattern = self._make_pattern()
+        self.pattern = Circuit.make_pattern(self.input_nodes, self.output_node)
 
 
     @property
     def firing_energy(self):
+        """
+        Current value of firing energy
+        The value denotes how many ticks the circuit should fire after initial firing
+        :return:
+        """
         return self.__firing_energy
 
 
@@ -30,22 +44,45 @@ class Circuit:
 
 
     def matches_input(self, input_nodes):
-        pattern = self._get_input_pattern(input_nodes)
+        """
+        Matches input nodes against self.input_nodes
+        :param input_nodes:
+        :return: True if parameter matches
+        """
+        pattern = self.get_input_pattern(input_nodes)
         return pattern == self.input_pattern
 
 
     @staticmethod
-    def _get_input_pattern(input_nodes):
+    def get_input_pattern(input_nodes):
+        """
+        Constructs a string representation from the parameter
+        :param input_nodes:
+        :return: string like '12, 34, 54'
+        """
         ids = [int(node.nid) for node in input_nodes]
         ids.sort()
         return ', '.join([str(id) for id in ids])
 
 
-    def _make_pattern(self):
-        return '{} - {}'.format(self.input_pattern, self.output_node.nid)
+    @staticmethod
+    def make_pattern(input_nodes, output_node):
+        """
+        Constructs a circuit representation from the parameters
+        :param input_nodes:
+        :return: string like '12, 34, 54 - 45'
+        """
+        input_pattern = Circuit.get_input_pattern(input_nodes)
+        return '{} - {}'.format(input_pattern, output_node.nid if output_node else '')
 
 
     def update(self, current_tick):
+        """
+        Updates the state of a circuit.
+        It will fire or not depending on self.weight and the number of firing input nodes
+        :param current_tick: current tick
+        :return:
+        """
         self.fired = False
         if self.firing_energy == 0:
             likelihood = self._get_firing_likelihood()
@@ -62,33 +99,54 @@ class Circuit:
 
 
     def _get_initial_firing_energy_distribution(self):
+        """
+        Returns a list of possible energy values distribution
+        :return:
+        """
         if self.fixed_firing_energy == 0:
             return [1, 1, 2, 2, 3, 3]
         distribution = []
-        sample = 2
         for i in range(1, 4):
             if i == self.fixed_firing_energy:
-                distribution.extend([i] * sample * 3)
+                distribution.extend([i] * 4)
             else:
-                distribution.extend([i] * sample)
+                distribution.extend([i])
         return distribution
 
 
     def _on_fire(self, current_tick, append_to_history=True):
+        """
+        Circuit firing behavior
+        Makes the corresponding output connection pulse
+        :param current_tick:
+        :param append_to_history:
+        :return:
+        """
         self.firing_energy -= 1
         self.firing_energy = max(0, self.firing_energy)
         connection = self.container.get_connection(source=self.node, target=self.output_node)
         if connection:
+            was_fired = self.fired
             self.fired = True
+            appended = False
             opposite = connection.get_opposite_connection()
             if not opposite or not opposite.pulsed:
                 connection.pulsing = True
                 if append_to_history:
                     self.firing_history.append(
                     {'tick': current_tick, 'energy': self.pattern_firing_energy, 'output': self.output_node, 'input': self.input_nodes})
+                    appended = True
+            if not was_fired and not appended and append_to_history:
+                fix_it = True
+
+
 
 
     def _get_firing_likelihood(self):
+        """
+        Returns firing likelihood depending on self.weight and the number of firing input nodes
+        :return:
+        """
         likelihood = 0
         if self.node.is_visual() and self.node.potential == 1:
             likelihood = 1.0

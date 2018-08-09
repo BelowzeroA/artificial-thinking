@@ -11,7 +11,9 @@ from utils.misc import split_list_in_batches
 
 
 class Network:
-
+    """
+    The main entry point and the manager of all neural processes
+    """
     def __init__(self):
         self.container = Container()
         self.current_tick = 0
@@ -24,68 +26,83 @@ class Network:
 
 
     def run_interactions(self, filename):
+        """
+        Performs interactions on batches from file
+        :param filename:
+        :return:
+        """
         lines = load_list_from_file(filename)
-        self._load_tests(lines)
+        # self._load_tests(lines)
         batches = split_list_in_batches(lines)
         for batch in batches:
             self._run_interaction_batch(batch)
 
 
-    def _load_tests(self, lines):
-        for line in lines:
-            if line.startswith('test:'):
-                for test in line[5:].split(';'):
-                    colon_pos = test.find(':')
-                    comma_pos = test.find(',')
-                    src_dest = test[:colon_pos]
-                    self.tests.append({'source': src_dest[:comma_pos].strip(),
-                                       'target': src_dest[comma_pos + 1:].strip(),
-                                       'size': test[colon_pos + 1:].strip()})
-                break
+    # def _load_tests(self, lines):
+    #     for line in lines:
+    #         if line.startswith('test:'):
+    #             for test in line[5:].split(';'):
+    #                 colon_pos = test.find(':')
+    #                 comma_pos = test.find(',')
+    #                 src_dest = test[:colon_pos]
+    #                 self.tests.append({'source': src_dest[:comma_pos].strip(),
+    #                                    'target': src_dest[comma_pos + 1:].strip(),
+    #                                    'size': test[colon_pos + 1:].strip()})
+    #             break
 
 
-    def run_tests(self, verbose=True):
-        result = True
-        for test in self.tests:
-            result = self.run_test(test, verbose) and result
-        if result and verbose:
-            print('all test are successfully passed!')
-
-        return result
-
-
-    def run_test(self, test, verbose):
-        node = self.container.get_node_by_id(test['source'])
-        result = True
-        target_node_found = False
-        for pattern in node.remembered_patterns:
-            if pattern[1] == test['target']:
-                target_node_found = True
-                accumulated_fingerprint = pattern[0].split()
-                real_size = self._finger_print_info_size(len(accumulated_fingerprint))
-                if real_size != int(test['size']):
-                    result = False
-                    if verbose:
-                        print('test failure: node: {}, dst: {}, test size: {}, real size: {}'.
-                              format(node.nid, test['target'], test['size'], real_size))
-        if not target_node_found:
-            if verbose:
-                print('test failure: target node not found for source: {}'.format(node.nid))
-            result = False
-        return result
+    # def run_tests(self, verbose=True):
+    #     result = True
+    #     for test in self.tests:
+    #         result = self.run_test(test, verbose) and result
+    #     if result and verbose:
+    #         print('all test are successfully passed!')
+    #
+    #     return result
 
 
-    @staticmethod
-    def _finger_print_info_size(flen):
-        if flen <= FINGERPRINT_LENGTH:
-            return 1
-        elif flen <= 2 * FINGERPRINT_LENGTH:
-            return 2
-        else:
-            return 3
+    # def run_test(self, test, verbose):
+    #     node = self.container.get_node_by_id(test['source'])
+    #     result = True
+    #     target_node_found = False
+    #     for pattern in node.remembered_patterns:
+    #         if pattern[1] == test['target']:
+    #             target_node_found = True
+    #             accumulated_fingerprint = pattern[0].split()
+    #             real_size = self._finger_print_info_size(len(accumulated_fingerprint))
+    #             if real_size != int(test['size']):
+    #                 result = False
+    #                 if verbose:
+    #                     print('test failure: node: {}, dst: {}, test size: {}, real size: {}'.
+    #                           format(node.nid, test['target'], test['size'], real_size))
+    #     if not target_node_found:
+    #         if verbose:
+    #             print('test failure: target node not found for source: {}'.format(node.nid))
+    #         result = False
+    #     return result
+
+
+    # @staticmethod
+    # def _finger_print_info_size(flen):
+    #     if flen <= FINGERPRINT_LENGTH:
+    #         return 1
+    #     elif flen <= 2 * FINGERPRINT_LENGTH:
+    #         return 2
+    #     else:
+    #         return 3
 
 
     def _run_interaction_batch(self, batch):
+        """
+        Parses and runs an interaction batch
+        Interaction batch is a group of sensor inputs coming together in a short timeframe
+        Batch sample:
+            v:mom
+            [v:bunny bunny]
+        Means that "Mom" is near the "baby" showing her a toy "bunny" and saying a word "bunny"
+        :param batch:
+        :return:
+        """
         signalling_nodes = []
         is_urge = len([line for line in batch if line.endswith('?')]) > 0
         is_reinforcement = not is_urge and len([line for line in batch if '?' in line]) > 0
@@ -288,6 +305,7 @@ class Network:
 
     def save_layout(self, filename):
         out_val = {'nodes': self.container.nodes,
+                   'circuits': self.container.get_all_circuits(),
                    'connections': self.container.connections}
         with open(filename, mode='wt', encoding='utf-8') as output_file:
             print(json_serialize(out_val), file=output_file)

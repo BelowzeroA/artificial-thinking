@@ -102,6 +102,10 @@ class Container:
             self.make_connection(source=source_node, target=target_node)
 
 
+    def get_all_circuits(self):
+        return [c for c in [node.circuits for node in self.nodes]]
+
+
     def _append_firing_pathway(self, node, pattern):
         inputs = []
         output = self.get_node_by_id(pattern[2])
