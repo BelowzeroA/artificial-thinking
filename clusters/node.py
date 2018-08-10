@@ -169,18 +169,7 @@ class Node:
             circuit.firing_energy = 0
 
 
-    # def _get_matching_pathway(self):
-    #     matched_pathways = []
-    #     for pathway in self.firing_pathways:
-    #         pathway_size = len(pathway['inputs'])
-    #         intersection = [node for node in pathway['inputs'] if node in self.input_nodes]
-    #         if len(intersection) == pathway_size:
-    #             matched_pathways.append(pathway)
-    #     return matched_pathways
-
-
     def _get_pulsing_outputs(self):
-        # return self.output
         output_size = len(self.output)
         if output_size == 1:
             return self.output

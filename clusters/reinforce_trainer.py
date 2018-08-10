@@ -16,12 +16,13 @@ class ReinforceTrainer(NetworkRunner):
         self.target_achieved = False
 
 
-    def run(self, initial_nodes, target_nodes):
+    def run(self, initial_nodes, target_nodes, verbose=True):
         self.initial_nodes = initial_nodes
         self.target_nodes = target_nodes
 
         for _ in range(REINFORCE_CYCLES_NUMBER):
-            print('batch {}, train {} of {}'.format(initial_nodes, _ + 1, REINFORCE_CYCLES_NUMBER))
+            if verbose:
+                print('batch {}, train {} of {}'.format(initial_nodes, _ + 1, REINFORCE_CYCLES_NUMBER))
             self._run_reinforce_train()
 
         return list(set(self.fired_nodes))
