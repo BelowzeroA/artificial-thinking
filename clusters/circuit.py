@@ -62,7 +62,31 @@ class Circuit:
         """
         ids = [int(node.nid) for node in input_nodes]
         ids.sort()
-        return ', '.join([str(id) for id in ids])
+        return ', '.join([str(id) for id in ids])\
+
+
+    @staticmethod
+    def load_from_json(node, container, entry):
+        output_node = container.get_node_by_id(entry['output'])
+        pattern = Circuit._make_pattern(entry['input'], output_node)
+        circuit = node.get_circuit_by_pattern(pattern)
+        if not circuit:
+            circuit = Circuit(node, output_node)
+            circuit.input_pattern = entry['input']
+            circuit.fixed_firing_energy = int(entry['energy'])
+            circuit.weight = entry['weight']
+            circuit.pattern = circuit._make_pattern(circuit.input_pattern, circuit.output_node)
+        return circuit
+
+
+    @staticmethod
+    def _make_pattern(input_pattern, output_node):
+        """
+        Constructs a circuit representation from the parameters
+        :param input_nodes:
+        :return: string like '12, 34, 54 - 45'
+        """
+        return '{} - {}'.format(input_pattern, output_node.nid if output_node else '')
 
 
     @staticmethod
@@ -73,7 +97,7 @@ class Circuit:
         :return: string like '12, 34, 54 - 45'
         """
         input_pattern = Circuit.get_input_pattern(input_nodes)
-        return '{} - {}'.format(input_pattern, output_node.nid if output_node else '')
+        return Circuit._make_pattern(input_pattern, output_node)
 
 
     def update(self, current_tick):
@@ -90,9 +114,12 @@ class Circuit:
             rand_val = random.randint(1, 100)
             if rand_val > margin:
                 return
-            fe_distribution = self._get_initial_firing_energy_distribution()
-            self.pattern_firing_energy = random.choice(fe_distribution)
-            self.firing_energy = self.pattern_firing_energy
+            if self.container.urge_mode:
+                self.firing_energy = self.fixed_firing_energy
+            else:
+                fe_distribution = self._get_initial_firing_energy_distribution()
+                self.pattern_firing_energy = random.choice(fe_distribution)
+                self.firing_energy = self.pattern_firing_energy
             self._on_fire(current_tick)
         else:
             self._on_fire(current_tick, append_to_history=False)
@@ -136,10 +163,6 @@ class Circuit:
                     self.firing_history.append(
                     {'tick': current_tick, 'energy': self.pattern_firing_energy, 'output': self.output_node, 'input': self.input_nodes})
                     appended = True
-            if not was_fired and not appended and append_to_history:
-                fix_it = True
-
-
 
 
     def _get_firing_likelihood(self):
@@ -161,6 +184,16 @@ class Circuit:
         else:
             likelihood = 1.0
         return likelihood * self.weight
+
+
+    def serialize(self):
+        _dict = {
+            'node': self.node.nid,
+            'input': self.input_pattern,
+            'output': self.output_node.nid if self.output_node else '',
+            'energy': self.fixed_firing_energy,
+            'weight': self.weight}
+        return _dict
 
 
     def _repr(self):

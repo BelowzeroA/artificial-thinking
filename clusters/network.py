@@ -34,62 +34,12 @@ class Network:
         lines = load_list_from_file(filename)
         # self._load_tests(lines)
         batches = split_list_in_batches(lines)
+        result = {}
         for batch in batches:
-            self._run_interaction_batch(batch)
-
-
-    # def _load_tests(self, lines):
-    #     for line in lines:
-    #         if line.startswith('test:'):
-    #             for test in line[5:].split(';'):
-    #                 colon_pos = test.find(':')
-    #                 comma_pos = test.find(',')
-    #                 src_dest = test[:colon_pos]
-    #                 self.tests.append({'source': src_dest[:comma_pos].strip(),
-    #                                    'target': src_dest[comma_pos + 1:].strip(),
-    #                                    'size': test[colon_pos + 1:].strip()})
-    #             break
-
-
-    # def run_tests(self, verbose=True):
-    #     result = True
-    #     for test in self.tests:
-    #         result = self.run_test(test, verbose) and result
-    #     if result and verbose:
-    #         print('all test are successfully passed!')
-    #
-    #     return result
-
-
-    # def run_test(self, test, verbose):
-    #     node = self.container.get_node_by_id(test['source'])
-    #     result = True
-    #     target_node_found = False
-    #     for pattern in node.remembered_patterns:
-    #         if pattern[1] == test['target']:
-    #             target_node_found = True
-    #             accumulated_fingerprint = pattern[0].split()
-    #             real_size = self._finger_print_info_size(len(accumulated_fingerprint))
-    #             if real_size != int(test['size']):
-    #                 result = False
-    #                 if verbose:
-    #                     print('test failure: node: {}, dst: {}, test size: {}, real size: {}'.
-    #                           format(node.nid, test['target'], test['size'], real_size))
-    #     if not target_node_found:
-    #         if verbose:
-    #             print('test failure: target node not found for source: {}'.format(node.nid))
-    #         result = False
-    #     return result
-
-
-    # @staticmethod
-    # def _finger_print_info_size(flen):
-    #     if flen <= FINGERPRINT_LENGTH:
-    #         return 1
-    #     elif flen <= 2 * FINGERPRINT_LENGTH:
-    #         return 2
-    #     else:
-    #         return 3
+            batch_results = self._run_interaction_batch(batch)
+            batch_repr = ', '.join(batch)
+            result[batch_repr] = batch_results
+        return result
 
 
     def _run_interaction_batch(self, batch):
@@ -103,13 +53,15 @@ class Network:
         :param batch:
         :return:
         """
+        result_nodes = []
         signalling_nodes = []
         is_urge = len([line for line in batch if line.endswith('?')]) > 0
         is_reinforcement = not is_urge and len([line for line in batch if '?' in line]) > 0
         first_order_nodes = []
         for line in batch:
             if line.endswith('?'):
-                self._run_urge_line(line, first_order_nodes)
+                result = self._run_urge_line(line, first_order_nodes)
+                result_nodes.extend(result)
             elif '?' in line:
                 self._run_reinforcement_line(line, signalling_nodes)
             else:
@@ -123,6 +75,8 @@ class Network:
 
         if len(batch) > 1 and not is_reinforcement:
             self._create_batch_node(list(set(signalling_nodes)))
+
+        return result_nodes
 
 
     def _run_urge_line(self, line, signalling_nodes):
@@ -158,9 +112,6 @@ class Network:
         walker = Walker(self.container)
         signalling_nodes = walker.run(nodes, max_ticks=2)
         signalling_nodes = [node for node in signalling_nodes if node.is_entity()]
-        # there_is_abstract = len([1 for node in signalling_nodes if node.abstract]) > 0
-        # if there_is_abstract:
-        #     signalling_nodes = [node for node in signalling_nodes if node.abstract]
         return nodes, signalling_nodes
 
 
@@ -305,7 +256,7 @@ class Network:
 
     def save_layout(self, filename):
         out_val = {'nodes': self.container.nodes,
-                   'circuits': self.container.get_all_circuits(),
+                   'circuits': self.container.get_circuits_to_store(),
                    'connections': self.container.connections}
         with open(filename, mode='wt', encoding='utf-8') as output_file:
             print(json_serialize(out_val), file=output_file)

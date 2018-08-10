@@ -10,14 +10,10 @@ def main():
     net.save_layout('./data/stage2.json')
 
     net.load_layout('./data/stage2.json')
-    net.run_interactions('./data/stage2_test.txt')
+    result = net.run_interactions('./data/stage2_test.txt')
+    for batch in result:
+        print('{}: {}'.format(batch, result[batch]))
 
-
-def test_network():
-    net = Network()
-    net.run_interactions('./data/stage1.txt')
-    net.save_layout('./data/stage2.json')
-    return net.run_tests(verbose=False)
 
 if __name__ == '__main__':
     main()

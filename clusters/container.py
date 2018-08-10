@@ -1,5 +1,6 @@
 import json
 
+from clusters.circuit import Circuit
 from clusters.connection import Connection
 from clusters.node import Node
 
@@ -91,15 +92,30 @@ class Container:
                 node.is_episode = self._read_property(entry, 'episode', False)
                 self.nodes.append(node)
 
-        for entry in [entry for entry in entries['nodes'] if 'remembered_patterns' in entry]:
-            node = self.get_node_by_id(entry['id'])
-            for pattern in entry['remembered_patterns']:
-                self._append_firing_pathway(node, pattern)
+        # for entry in [entry for entry in entries['nodes'] if 'remembered_patterns' in entry]:
+        #     node = self.get_node_by_id(entry['id'])
+        #     for pattern in entry['remembered_patterns']:
+        #         self._append_firing_pathway(node, pattern)
 
         for entry in entries['connections']:
             source_node = self.get_node_by_id(entry['source'])
             target_node = self.get_node_by_id(entry['target'])
             self.make_connection(source=source_node, target=target_node)
+
+        if 'circuits' in entries:
+            for entry in entries['circuits']:
+                node = self.get_node_by_id(entry['node'])
+                circuit = Circuit.load_from_json(node, self, entry)
+                node.append_circuit(circuit)
+
+
+    def get_circuits_to_store(self):
+        circuits = []
+        for node in self.nodes:
+            for circuit in node.circuits:
+                if circuit.fixed_firing_energy > 0:
+                    circuits.append(circuit)
+        return circuits
 
 
     def get_all_circuits(self):

@@ -1,8 +1,8 @@
 import itertools
 import operator
 
-import math
-
+from clusters.circuit import Circuit
+from clusters.hyper_parameters import REINFORCE_TRAIN_CYCLES_NUMBER, REINFORCE_CYCLES_NUMBER
 from clusters.network_runner import NetworkRunner
 
 
@@ -16,11 +16,12 @@ class ReinforceTrainer(NetworkRunner):
         self.target_achieved = False
 
 
-    def run(self, initial_nodes, target_nodes, num_trains=5):
+    def run(self, initial_nodes, target_nodes):
         self.initial_nodes = initial_nodes
         self.target_nodes = target_nodes
 
-        for _ in range(num_trains):
+        for _ in range(REINFORCE_CYCLES_NUMBER):
+            print('batch {}, train {} of {}'.format(initial_nodes, _ + 1, REINFORCE_CYCLES_NUMBER))
             self._run_reinforce_train()
 
         return list(set(self.fired_nodes))
@@ -30,7 +31,7 @@ class ReinforceTrainer(NetworkRunner):
         max_cycles = 100
         accumulated_patterns = {}
         tree_complete_counter = 0
-        for _ in range(max_cycles):
+        for _ in range(REINFORCE_TRAIN_CYCLES_NUMBER):
             tree = self._reinforce_loop()
             if tree:
                 tree_complete_counter += 1
@@ -57,6 +58,8 @@ class ReinforceTrainer(NetworkRunner):
             inputs, output = self._inputs_outputs_from_pattern(pattern)
             node.remembered_patterns.append({'inputs': inputs, 'output': output, 'rate': weight / mean})
             circuit = node.get_circuit(inputs, output)
+            if not circuit and node.is_synthesizer() and output is None:
+                circuit = node.get_circuit_by_input_pattern(Circuit.get_input_pattern(inputs))
             if circuit:
                 self._upgrade_circuit(circuit, weight / mean, pattern_list, pattern)
 
