@@ -3,11 +3,12 @@ from clusters.network_runner import NetworkRunner
 
 class UrgeResolver(NetworkRunner):
 
-    def __init__(self, container):
+    def __init__(self, container, log):
         super().__init__(container=container)
         self.container.urge_mode = True
         self.result_nodes = []
         self.urge_resolved = False
+        self.log = log
 
 
     def run(self, initial_nodes):
@@ -37,7 +38,7 @@ class UrgeResolver(NetworkRunner):
         for node in self.container.nodes:
             if self.urge_resolved:
                 break
-            node.update(self.current_tick)
+            node.update(self.current_tick, self.log)
             if node.fired and node.is_synthesizer():
                 self.urge_resolved = True
                 self.result_nodes.append(node)

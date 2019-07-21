@@ -2,14 +2,14 @@ import math
 import random
 
 
-class Circuit:
+class GeneralizingCircuit:
     """
     Represents a Circuit entity:
     1) Circuit is a part of a Node
     2) responsible for precise connecting of nodes: maps input nodes to an output node
     3) used in reinforcement mode and urge mode
     """
-    def __init__(self, node, output_node):
+    def __init__(self, node):
         """
         :param node: a node this circuit belongs to
         :param output_node: an output node
@@ -17,9 +17,7 @@ class Circuit:
         self.node = node
         self.container = node.container
         self.input_nodes = list(node.input_nodes)
-        self.input_nodes_set = set(node.input_nodes)
         self.input_pattern = Circuit.get_input_pattern(self.input_nodes)
-        self.output_node = output_node
         self.__firing_energy = 0
         self.pattern_firing_energy = 0
         self.fixed_firing_energy = 0
@@ -27,7 +25,6 @@ class Circuit:
         self.fired = False
         self.firing_history = []
         self.pattern = Circuit.make_pattern(self.input_nodes, self.output_node)
-        self.log = []
 
 
     @property
@@ -45,14 +42,13 @@ class Circuit:
         self.__firing_energy = fe
 
 
-    def matches_input(self, pattern):
+    def matches_input(self, input_nodes):
         """
         Matches input nodes against self.input_nodes
         :param input_nodes:
         :return: True if parameter matches
         """
-        # return set(input_nodes) == self.input_nodes_set
-        # pattern = self.get_input_pattern(input_nodes)
+        pattern = self.get_input_pattern(input_nodes)
         return pattern == self.input_pattern
 
 
@@ -65,7 +61,7 @@ class Circuit:
         """
         ids = [int(node.nid) for node in input_nodes]
         ids.sort()
-        return ', '.join([str(id) for id in ids])
+        return ', '.join([str(id) for id in ids])\
 
 
     @staticmethod

@@ -11,39 +11,39 @@ class Connection:
         self.container = container
         self.fingerprint = []
         self.source_gate = 0
-        self.generate_fingerprint()
+        # self.generate_fingerprint()
         self.pulsing = False
         self.pulsed = False
         self.weight = 0
 
 
-    def generate_fingerprint(self):
-        fp = set()
-        while len(fp) < FINGERPRINT_LENGTH:
-            fp.add(random.randint(1, INPUT_GATE_SIZE))
-        fp = list(fp)
-        fp.sort()
-        self.fingerprint = fp
+    # def generate_fingerprint(self):
+    #     fp = set()
+    #     while len(fp) < FINGERPRINT_LENGTH:
+    #         fp.add(random.randint(1, INPUT_GATE_SIZE))
+    #     fp = list(fp)
+    #     fp.sort()
+    #     self.fingerprint = fp
 
 
     def get_opposite_connection(self):
         return self.container.get_connection(source=self.target, target=self.source)
 
 
-    def update0(self):
-        if self.pulsing:
-            opposite = self.container.get_connection(source=self.target, target=self.source)
-            opposite_pulsed = opposite and opposite.pulsed
-            self.pulsed = True
-            if self.container.reinforcement_mode:
-                if not opposite_pulsed:
-                    self.target.receive_spike(self)
-            else:
-                if not opposite_pulsed:
-                    self.target.potential += 1
-                    self.target.input_nodes.add(self.source)
-                    self.target.causal_connections.append(self)
-            self.pulsing = False
+    # def update0(self):
+    #     if self.pulsing:
+    #         opposite = self.container.get_connection(source=self.target, target=self.source)
+    #         opposite_pulsed = opposite and opposite.pulsed
+    #         self.pulsed = True
+    #         if self.container.reinforcement_mode:
+    #             if not opposite_pulsed:
+    #                 self.target.receive_spike(self)
+    #         else:
+    #             if not opposite_pulsed:
+    #                 self.target.potential += 1
+    #                 self.target.input_nodes.add(self.source)
+    #                 self.target.causal_connections.append(self)
+    #         self.pulsing = False
 
 
     def update(self):

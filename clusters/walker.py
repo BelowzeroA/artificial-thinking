@@ -31,6 +31,9 @@ class Walker(NetworkRunner):
             node.firing = False
             node.potential = 0
 
+        for connection in self.container.connections:
+            connection.pulsed = False
+
 
     def update_state(self):
         for node in self.container.nodes:

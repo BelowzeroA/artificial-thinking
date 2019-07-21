@@ -19,6 +19,7 @@ class Node:
         self.abstract = abstract
         self.is_sequence = is_sequence
         self.potential = 0
+        self.mass = 1
         self.threshold = 1
         self.fired = False
         self.firing = False
@@ -31,10 +32,11 @@ class Node:
         self.firing_energy = 0
         self.remembered_patterns = []
         self.circuits = []
+        self.generalizing_circuits = []
         self.prev_input_nodes = []
 
 
-    def update(self, current_tick):
+    def update(self, current_tick, log=None):
         if self.container.reinforcement_mode:
             self.update_reinforcement_mode(current_tick)
         elif self.container.consolidation_mode:
@@ -42,7 +44,7 @@ class Node:
                 return
             self.update_consolidation_mode()
         elif self.container.urge_mode:
-            self.update_urge_mode(current_tick)
+            self.update_urge_mode(current_tick, log)
         else:
             if self.is_synthesizer():
                 return
@@ -86,15 +88,22 @@ class Node:
         if fired:
             self.firing = True
             self.fired = True
+            self._update_generalizing_circuits()
         self.input_nodes.clear()
+
+
+    def _update_generalizing_circuits(self):
+        for circuit in self.generalizing_circuits:
+            circuit.update()
 
 
     def _ensure_circuits(self):
         result = []
         if len(self.input_nodes) > 0:
+            input_pattern = Circuit.get_input_pattern(self.input_nodes)
             outgoing = self.container.get_outgoing_connections(self)
             for conn in outgoing:
-                circuit = self._ensure_circuit(conn.target)
+                circuit = self._ensure_circuit(input_pattern, conn.target)
                 if circuit:
                     result.append(circuit)
         for circuit in self.circuits:
@@ -103,8 +112,8 @@ class Node:
         return result
 
 
-    def _ensure_circuit(self, output_node):
-        circuits = [c for c in self.circuits if c.matches_input(self.input_nodes) and c.output_node == output_node]
+    def _ensure_circuit(self, input_pattern, output_node):
+        circuits = [c for c in self.circuits if c.matches_input(input_pattern) and c.output_node == output_node]
         if circuits:
             return circuits[0]
         if output_node in self.input_nodes:
@@ -127,21 +136,28 @@ class Node:
         return len(intersection) == len(inp1) and len(intersection) == len(inp2)
 
 
-    def update_urge_mode(self, current_tick):
+    def update_urge_mode(self, current_tick, log):
         if self.is_perceptual() and self.potential > 0:
             connections = self.container.get_outgoing_connections(self)
             for connection in connections:
                 connection.pulsing = True
         else:
             fired = False
-            circuits = [c for c in self.circuits if c.matches_input(self.input_nodes)]
+            input_pattern = Circuit.get_input_pattern(self.input_nodes)
+            circuits = [c for c in self.circuits if c.matches_input(input_pattern)]
             for circuit in circuits:
                 circuit.update(current_tick)
                 fired = circuit.fired or fired
             self.potential = 0
             if fired:
+                self._add_event_to_log(log, current_tick, input_pattern)
                 self.firing = True
                 self.fired = True
+
+
+    def _add_event_to_log(self, log, current_tick, input_pattern):
+        if log is not None:
+            log.append({'tick': current_tick, 'node': '{} {}'.format(self.nid, self.pattern), 'input': input_pattern})
 
 
     def get_circuit_by_pattern(self, pattern):
@@ -208,11 +224,11 @@ class Node:
         if self.potential == 0.0:
             return 0.0
         elif self.potential == 1:
-            return 0.3
+            return 0.2 * self.mass
         elif self.potential == 2:
-            return 0.8
+            return 0.6 * self.mass
         else:
-            return 1.0
+            return 0.9 * self.mass
 
 
     def receive_spike(self, connection):
@@ -258,7 +274,7 @@ class Node:
 
 
     def is_entity(self):
-        return ':' not in self.pattern
+        return ':' not in self.pattern and not self.is_episode
 
 
     def is_twin(self):
@@ -284,7 +300,7 @@ class Node:
 
 
     def serialize(self):
-        _dict = {'id': self.nid}
+        _dict = {'id': self.nid, 'mass': self.mass}
         if self.is_episode:
             _dict['episode'] = True
         if self.abstract:

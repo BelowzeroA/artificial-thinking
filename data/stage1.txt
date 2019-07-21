@@ -24,3 +24,15 @@ v:mom
 v:cow
 what is it
 cow
+
+v:mom
+[v:duck duck]
+
+v:mom
+[v:dog dog]
+
+dog say bark
+
+duck say quack
+
+cow say mooo

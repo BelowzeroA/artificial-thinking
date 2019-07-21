@@ -1,0 +1,9 @@
+1: v:apple apple
+10: v:apple apple
+20: v:apple apple
+30: approach
+40: approach
+50: v:cat cat
+60: v:cat cat
+70: v:cat v:tail tail
+80: v:cat v:tail tail

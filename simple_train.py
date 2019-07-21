@@ -1,14 +1,7 @@
-from network.neural_network import NeuralNetwork
-
-
-def main():
-
-    net = NeuralNetwork()
-    net.load('./scripts/summator.json')
-    # net.load('./scripts/transmission.json')
-    net.fit(num_epochs=200, verbose=True)
-    net.save_model('./data/summator_model.json')
-
-
-if __name__ == '__main__':
-    main()
+a = 0
+f = 1
+for i in range(1, 10):
+    if i >= 5:
+        print(f)
+    else:
+        print(a)

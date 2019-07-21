@@ -1,0 +1,6 @@
+1: v:ball ball
+10: v:food o:grabbed a:put DOPE
+30: v:food {o:not_grabbed_reachable a:grab} {a:put}
+50: v:ball take o:not_grabbed_reachable a:grab
+60: v:food
+70: v:food o:unreachable

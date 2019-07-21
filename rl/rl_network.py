@@ -1,8 +1,7 @@
 import math
+import random
 
 from clusters.container import Container
-from clusters.hyper_parameters import FINGERPRINT_LENGTH
-from clusters.memory_consolidator import MemoryConsolidator
 from clusters.node import Node
 from clusters.reinforce_trainer import ReinforceTrainer
 from clusters.urge_resolver import UrgeResolver
@@ -12,20 +11,27 @@ from utils.json_serializer import json_serialize
 from utils.misc import split_list_in_batches
 
 
-class Network:
+class RLNetwork:
     """
     The main entry point and the manager of all neural processes
     """
-    def __init__(self):
+    def __init__(self, world):
         self.container = Container()
+        self.world = world
         self.current_tick = 0
         self.input_nodes = []
-        self.tests = []
         self.log = []
+        self.episode_counter = 0
+        self._create_predefined_nodes()
+        self.reward_node = None
 
 
     def load_layout(self, filename):
         self.container.load(filename)
+
+
+    def _create_predefined_nodes(self):
+        self.reward_node = self._check_create_node('reward')
 
 
     @staticmethod
@@ -34,99 +40,125 @@ class Network:
             print(log_line)
 
 
-    def run_interactions(self, filename):
+    def run(self, epochs=10):
         """
-        Performs interactions on batches from file
+        Performs running cycle
         :param filename:
         :return:
         """
-        lines = load_list_from_file(filename)
-        # self._load_tests(lines)
-        batches = split_list_in_batches(lines)
-        result = {}
-        for batch in batches:
-            batch_results = self._run_interaction_batch(batch)
-            batch_repr = ', '.join(batch)
-            result[batch_repr] = (batch_results, list(self.log))
-            self.log.clear()
-        return result
+        return random.choice(['TurnLeft', 'TurnRight', 'Forward', 'Forward'])
 
 
-    def _run_interaction_batch(self, batch):
+    def memorize(self, action, observations, reward):
         """
-        Parses and runs an interaction batch
-        Interaction batch is a group of sensor inputs coming together in a short timeframe
-        Batch sample:
-            v:mom
-            [v:bunny bunny]
-        Means that "Mom" is near the "baby" showing her a toy "bunny" and saying a word "bunny"
-        :param batch:
+        Memorizes an episode which is effectively a (action, observations, reward) tuple
+        :param action:
         :return:
         """
-        if len(batch) == 1:
-            return self._run_one_line_batch(batch[0])
+        direct_nodes = []
+        action_node = self._check_create_node(action)
+        direct_nodes.append(action_node)
+        observation_nodes = self._make_observation_nodes(observations)
+        if not observation_nodes:
+            # no observations - nothing to memorize
+            return
+
+        direct_nodes.extend(observation_nodes)
+
+        # near signalling to awake latent nodes
+        signalled_nodes = self._run_observation_set(direct_nodes)
+
+        self.episode_counter += 1
+        episode_node = self._check_create_node(f'episode {self.episode_counter}')
+        episode_node.is_episode = True
+        self.container.make_connection(action_node, episode_node)
+        self.container.make_connection(episode_node, action_node)
+
+        for node in signalled_nodes:
+            if node not in [action_node]:
+                self.container.make_connection(node, episode_node)
+                self.container.make_connection(episode_node, node)
+
+        if reward:
+            self.container.make_connection(episode_node, self.reward_node)
+            self.container.make_connection(self.reward_node, episode_node)
+
+
+    def learn_connectome(self):
+        """
+        Makes and adjust connections between simultaneously firing nodes within one episode
+        """
+        episode_nodes = [node for node in self.container.nodes if node.is_episode]
+        if len(episode_nodes) < 2:
+            return
+        connections_counter = {}
+        for node in episode_nodes:
+            self._collect_episode_callout_stats(node, connections_counter)
+
+        pair_list = [(key, connections_counter[key]) for key in connections_counter]
+        pair_list.sort(key=lambda item: item[1], reverse=True)
+        top_count = pair_list[0][1]
+        if top_count < 4:
+            return
+        # make connections for the top half of pairs
+        for pair, cnt in pair_list:
+            if cnt > top_count // 2:
+                self._make_connection_for_pair(pair)
+
+
+    def _make_connection_for_pair(self, pair_repr):
+        node_ids = pair_repr.split('-')
+        node1 = self.container.get_node_by_id(node_ids[0].strip())
+        node2 = self.container.get_node_by_id(node_ids[1].strip())
+        self.container.make_connection(node1, node2)
+        self.container.make_connection(node2, node1)
+
+
+    def _collect_episode_callout_stats(self, node, connections_counter):
+        walker = Walker(self.container)
+        fired_nodes = walker.run([node], max_ticks=2)
+        local_cache = set()
+        for node1 in fired_nodes:
+            for node2 in fired_nodes:
+                if not node1.is_episode and not node2.is_episode and node1 != node2 and node1 != node and node2 != node:
+                    repr = self.get_node_pair_pattern(node1, node2)
+                    if repr in local_cache:
+                        continue
+                    local_cache.add(repr)
+                    if repr in connections_counter:
+                        connections_counter[repr] += 1
+                    else:
+                        connections_counter[repr] = 1
+
+    @staticmethod
+    def get_node_pair_pattern(node1, node2):
+        """
+        Constructs a string representation of nodes pair
+        """
+        if int(node1.nid) > int(node2.nid):
+            return f'{node2.nid} - {node1.nid}'
         else:
-            return self._run_multiline_batch(batch)
+            return f'{node1.nid} - {node2.nid}'
 
 
-    def _run_one_line_batch(self, batch):
+    def _make_observation_nodes(self, observations):
         """
-        :param batch:
+        Creates nodes for observations
+        :param observations: list of observations
         :return:
         """
-        result_nodes = []
-        signalling_nodes = []
-
-        entities = batch.split()
-        for entity in entities:
-            node = self._create_triple(entity)
-            signalling_nodes.append(node)
-
-        self._create_batch_node(signalling_nodes)
-        # nodes, second_order_signaled_nodes = self._run_interaction_line(batch)
-        #
-        # signalling_nodes.extend(second_order_signaled_nodes)
-        #
-        # self._create_batch_node(list(set(signalling_nodes)))
-
-        return result_nodes
-
-
-    def _run_multiline_batch(self, batch):
-        """
-        Parses and runs an interaction batch
-        Interaction batch is a group of sensor inputs coming together in a short timeframe
-        Batch sample:
-            v:mom
-            [v:bunny bunny]
-        Means that "Mom" is near the "baby" showing her a toy "bunny" and saying a word "bunny"
-        :param batch:
-        :return:
-        """
-        result_nodes = []
-        signalling_nodes = []
-        is_urge = len([line for line in batch if line.endswith('?')]) > 0
-        is_reinforcement = not is_urge and len([line for line in batch if '?' in line]) > 0
-        first_order_nodes = []
-        for line in batch:
-            if line.endswith('?'):
-                result = self._run_urge_line(line, first_order_nodes)
-                result_nodes.extend(result)
-            elif '?' in line:
-                self._run_reinforcement_line(line, signalling_nodes)
-            else:
-                if is_reinforcement:
-                    nodes = self._create_nodes(line)
-                    signalling_nodes.extend(nodes)
-                else:
-                    nodes, second_order_signaled_nodes = self._run_interaction_line(line)
-                    signalling_nodes.extend(second_order_signaled_nodes)
-                    first_order_nodes.extend(nodes)
-
-        if len(batch) > 1 and not is_reinforcement:
-            self._create_batch_node(list(set(signalling_nodes)))
-
-        return result_nodes
+        observation_nodes = []
+        for (obj, observation) in observations:
+            object_node = self._check_create_node(obj.name)
+            for key in observation:
+                if observation[key]:
+                    observation_node = self._check_create_node(key)
+                    object_observation_id = f'{obj.name} {key}';
+                    object_observation_node = self._check_create_node(object_observation_id)
+                    self.container.make_connection(observation_node, object_observation_node)
+                    self.container.make_connection(object_node, object_observation_node)
+                    observation_nodes.append(object_observation_node)
+        return observation_nodes
 
 
     def _run_urge_line(self, line, signalling_nodes):
@@ -163,6 +195,15 @@ class Network:
         signalling_nodes = walker.run(nodes, max_ticks=2)
         signalling_nodes = [node for node in signalling_nodes if node.is_entity()]
         return nodes, signalling_nodes
+
+
+    def _run_observation_set(self, nodes):
+        if len(nodes) < 2:
+            return []
+        walker = Walker(self.container)
+        signalling_nodes = walker.run(nodes, max_ticks=2)
+        signalling_nodes = [node for node in signalling_nodes if node.is_entity()]
+        return signalling_nodes
 
 
     def _run_reinforcement_line(self, line, signalling_nodes):
@@ -234,37 +275,6 @@ class Network:
     def sleep(self):
         for _ in range(8):
             self._sleep_phase()
-
-
-    def _sleep_phase(self):
-        consolidator = MemoryConsolidator(self.container)
-        node_weights = {}
-        conn_weights = {}
-        pulses = 20
-        for _ in range(pulses):
-            node_counters, conn_counters = consolidator.run()
-            for node in node_counters:
-                if node in node_weights:
-                    node_weights[node] += node_counters[node]
-                else:
-                    node_weights[node] = node_counters[node]
-
-            for conn in conn_counters:
-                if conn in conn_weights:
-                    conn_weights[conn] += conn_counters[conn]
-                else:
-                    conn_weights[conn] = conn_counters[conn]
-
-        node_weights = {node: node_weights[node] for node in node_weights
-                        if not node.is_special() and not node.is_episode }
-        max_weight_node = max(node_weights, key=node_weights.get)
-        max_weight = node_weights[max_weight_node]
-        mean = max_weight / 2
-        self._upgrade_nodes_mass(node_weights, mean)
-
-        hub_nodes = [node for node in node_weights if not node.is_twin() and node_weights[node] > max_weight * 0.8]
-        for node in hub_nodes:
-            self._create_twin_node(node)
 
 
     @staticmethod

@@ -90,12 +90,8 @@ class Container:
                 node = Node(nid=entry['id'], pattern=entry['pattern'], container=self)
                 node.abstract = self._read_property(entry, 'abstract', False)
                 node.is_episode = self._read_property(entry, 'episode', False)
+                node.mass = self._read_property(entry, 'mass', 1)
                 self.nodes.append(node)
-
-        # for entry in [entry for entry in entries['nodes'] if 'remembered_patterns' in entry]:
-        #     node = self.get_node_by_id(entry['id'])
-        #     for pattern in entry['remembered_patterns']:
-        #         self._append_firing_pathway(node, pattern)
 
         for entry in entries['connections']:
             source_node = self.get_node_by_id(entry['source'])
