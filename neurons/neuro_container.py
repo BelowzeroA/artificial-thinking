@@ -23,12 +23,16 @@ class NeuroContainer:
         self.current_label = None
         self.network = None
         self.areas: List[NeuralArea] = []
+        self.default_area = None
 
     def append_neuron(self, neuron):
         self.neurons.append(neuron)
 
     def add_areas(self, areas: List):
         self.areas.extend(areas)
+
+    def add_area(self, area: 'NeuralArea'):
+        self.areas.append(area)
 
     def create_neuron(self):
         neuron = Neuron(id=self.next_neuron_id(), container=self)
@@ -42,13 +46,19 @@ class NeuroContainer:
         self.assemblies.append(na)
         return na
 
+    def get_area_by_prefix(self, prefix: str) -> 'NeuralArea':
+        if prefix is None:
+            return self.default_area
+        for area in self.areas:
+            if area.corresponds_to_prefix(prefix):
+                return area
+        return None
 
     def create_sab(self, layer, params: SabParameters):
         from vision.self_sustained_block import SelfSustainedActivityBlock
         sab = SelfSustainedActivityBlock(id=self.next_sab_id(), container=self, layer=layer, params=params)
         self.sabs.append(sab)
         return sab
-
 
     def get_current_label_sab(self):
         if not self.current_label:

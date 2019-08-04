@@ -6,6 +6,7 @@ from lang.connection import Connection
 from lang.data_provider import DataProvider
 from lang.hyperparameters import HyperParameters
 from lang.network import Network
+from lang.neural_area import NeuralArea
 from lang.neural_assembly import NeuralAssembly
 from lang.phonetics_dict import PhoneticsDict
 from neurons.neuro_container import NeuroContainer
@@ -30,20 +31,22 @@ class AssemblyBuilder:
         assembly_source = self.data_provider[tick]
         visual_nas = self._check_create_visual_assemblies(assembly_source)
         total_ticks = 0
+        last_observation = None
         current_planned_tick = tick
         for token in assembly_source.tokens:
             if token in assembly_source.actions:
                 current_planned_tick = self._check_create_action_assembly(
                     pattern=token,
-                    firing_tick=current_planned_tick,
-                    doped=assembly_source.doped
+                    firing_tick=current_planned_tick
                 )
             elif token in assembly_source.observations:
-                self._check_create_observation_assembly(
+                last_observation = self._check_create_observation_assembly(
                     pattern=token,
-                    firing_tick=current_planned_tick,
-                    doped=assembly_source.doped
+                    firing_tick=current_planned_tick
                 )
+            elif token == 'DOPE':
+                last_observation.doped = True
+                continue
             else:
                 phonemes = self.phonetics[token]
                 current_planned_tick = self._prepare_phoneme_assemblies(current_planned_tick, phonemes)
@@ -66,19 +69,20 @@ class AssemblyBuilder:
             visual_nas.append(visual_na)
         return visual_nas
 
-    def _check_create_action_assembly(self, pattern: str, firing_tick: int, doped: bool) -> NeuralAssembly:
+    def _check_create_action_assembly(self, pattern: str, firing_tick: int) -> NeuralAssembly:
         na = self._find_create_assembly(pattern=pattern)
         na.firing_ticks = [firing_tick + tick for tick in range(HyperParameters.action_firing_span)]
-        if not na.doped:
-            na.doped = doped
-        self._create_linked_assembly(source_na=na, capacity=1)
+        # if not na.doped:
+        #     na.doped = doped
+        # self._create_linked_assembly(source_na=na, capacity=1)
         return na.firing_ticks[-1:][0]
 
-    def _check_create_observation_assembly(self, pattern: str, firing_tick: int, doped: bool) -> NeuralAssembly:
+    def _check_create_observation_assembly(self, pattern: str, firing_tick: int) -> NeuralAssembly:
         na = self._find_create_assembly(pattern=pattern)
         na.firing_ticks = [firing_tick + tick for tick in range(HyperParameters.observation_firing_span)]
-        if not na.doped:
-            na.doped = doped
+        return na
+        # if not na.doped:
+        #     na.doped = doped
 
     def _build_assemblies_for_token(self, token: str):
         token_assembly = self._find_create_assembly(token)
@@ -86,7 +90,7 @@ class AssemblyBuilder:
         for phoneme in phonemes:
             self._find_create_assembly(phoneme)
 
-    def _create_joint_assembly(self, nas: List[NeuralAssembly]) -> NeuralAssembly:
+    def _create_joint_assembly(self, nas: List[NeuralAssembly], area: NeuralArea) -> NeuralAssembly:
         pattern = ''
         for na in nas:
             pattern += f'{na.cleaned_pattern}+'
@@ -95,6 +99,7 @@ class AssemblyBuilder:
         joint_na = self._find_create_assembly(pattern)
         joint_na.capacity = self._get_joint_capacity(nas)
         joint_na.is_joint = True
+        joint_na.area = area
         joint_na.hierarchy_level = max_level_na.hierarchy_level + 1
         return joint_na
 
@@ -103,6 +108,10 @@ class AssemblyBuilder:
         if not na:
             na = self.container.create_assembly(pattern)
             prefix = self._get_pattern_prefix(pattern)
+            area = self.container.get_area_by_prefix(prefix)
+            if area is None:
+                raise ValueError(f'No area found for prefix {prefix}')
+            na.area = area
             if prefix in PERCEPTUAL_PREFIXES:
                 na.perceptual = True
                 na.capacity = HyperParameters.initial_receptive_assembly_capacity
@@ -110,6 +119,8 @@ class AssemblyBuilder:
 
     @staticmethod
     def _get_pattern_prefix(pattern: str) -> str:
+        if pattern.startswith('lnk1'):
+            pattern = pattern[5:]
         if ':' in pattern:
             return pattern[:pattern.index(':')]
         return None
@@ -117,13 +128,14 @@ class AssemblyBuilder:
     def _find_create_assembly_chain(self, pattern: str, capacity: int) -> NeuralAssembly:
         na = self._find_create_assembly(pattern)
         na.capacity = capacity
-        linked_capacity = na.capacity // HyperParameters.linked_assembly_capacity_rate
-        hier_level = na.hierarchy_level - 1
-        if hier_level <= 0:
-            hier_level = 1
-        linked_capacity = linked_capacity // hier_level
-        if linked_capacity >= HyperParameters.minimal_capacity:
-            self._create_linked_assembly(source_na=na, capacity=linked_capacity)
+        if na.area.create_linked_assembly:
+            linked_capacity = na.capacity // HyperParameters.linked_assembly_capacity_rate
+            hier_level = na.hierarchy_level - 1
+            if hier_level <= 0:
+                hier_level = 1
+            linked_capacity = linked_capacity // hier_level
+            if linked_capacity >= HyperParameters.minimal_capacity:
+                self._create_linked_assembly(source_na=na, capacity=linked_capacity)
         return na
 
     def _create_linked_assembly(self, source_na: NeuralAssembly, capacity: int) -> NeuralAssembly:
@@ -175,6 +187,11 @@ class AssemblyBuilder:
         return 'ph: ' + pattern
 
     def _get_joint_assembly(self, nas: List[NeuralAssembly]) -> NeuralAssembly:
+        """
+        Returns a common downstream assembly
+        :param nas: source assemblies
+        :return:
+        """
         nas_set = set(nas)
         connections = [conn for conn in self.container.connections if conn.source in nas and conn.target.is_joint]
         targets = set([conn.target for conn in connections])
@@ -232,26 +249,45 @@ class AssemblyBuilder:
             perceptual = [na for na in fired_assemblies if na.perceptual]
             if len(perceptual) == len(fired_assemblies):
                 return
+            joint_area = self._get_common_downstream_area(fired_assemblies)
             joint_capacity = self._get_joint_capacity(fired_assemblies)
-            if joint_capacity >= HyperParameters.minimal_capacity:
-                joint_na = self._create_joint_assembly(fired_assemblies)
+            if joint_area and joint_capacity >= HyperParameters.minimal_capacity:
+                joint_na = self._create_joint_assembly(fired_assemblies, joint_area)
                 joint_na.formed_at = self.container.current_tick
                 joint_na.fill_contributors(fired_assemblies)
                 for na in fired_assemblies:
                     self._check_create_connection(na, joint_na)
 
+    def _get_common_downstream_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
+        areas = set([a.area for a in fired_assemblies])
+        for area in self.container.areas:
+            if set(area.upstream_areas) == areas:
+                return area
+        return None
+
     def _check_update_downstream_assembly(self, fired_assemblies: List[NeuralAssembly]) -> bool:
         downstream_assembly = self._get_downstream_assembly(fired_assemblies)
         if downstream_assembly:
             for na in fired_assemblies:
-                self._check_create_connection(na, downstream_assembly)
-                if na not in downstream_assembly.contributors:
-                    downstream_assembly.contributors.append(na)
+                if self._assemblies_can_be_connected(na, downstream_assembly):
+                    self._check_create_connection(na, downstream_assembly)
+                    if na not in downstream_assembly.contributors:
+                        downstream_assembly.contributors.append(na)
         return downstream_assembly is not None
 
+    def _assemblies_can_be_connected(self, source: NeuralAssembly, target: NeuralAssembly) -> bool:
+        return source.area in target.area.upstream_areas
+
     def _build_linked_assemblies(self):
+        """
+        builds linked assemblies if necessary.
+        Linked assembly is an assembly that fires one tick later after the master assembly
+        :return:
+        """
         fired_assemblies = [na for na in self.container.assemblies if na.fired and not na.perceptual and not na.is_link]
         for na in fired_assemblies:
+            if not na.area.create_linked_assembly:
+                continue
             linked_na = self._find_linked_assembly(na)
             if linked_na:
                 continue

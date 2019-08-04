@@ -27,7 +27,7 @@ class NeuralAssembly:
         self.last_fired_at = 0
         self.hierarchy_level = 0
         self.contributors = []
-        self.fired_contributors = []
+        self.fired_contributors: List[NeuralAssembly] = []
         self.area: NeuralArea = None
 
     @property
@@ -73,6 +73,23 @@ class NeuralAssembly:
             effective_contributors.append(na)
         if len(effective_contributors) > 2:
             self.threshold = 3
+
+    def on_doped(self, current_tick: int):
+        """
+        Invoked whenever dopamine gets to the assembly
+        :return:
+        """
+        self.doped = True
+        for na in self.fired_contributors:
+            #TODO: consider moving this hardcoded rule into the neural areas config file
+            if self.area in na.area.double_activation_from:
+                connection = self.container.get_connection_between_nodes(self, na)
+                if not connection:
+                    connection = self.container.create_connection(source=self, target=na)
+                connection.multiplier = 2
+            if na.area in self.area.double_activation_from:
+                connection = self.container.get_connection_between_nodes(na, self)
+                connection.multiplier = 2
 
     def _repr(self):
         return f'"{self.pattern}" id: {self.id}'

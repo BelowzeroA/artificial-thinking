@@ -1,6 +1,8 @@
 from typing import List
 
 
+KEY_DOPED = 'DOPE'
+
 class AssemblySource:
     """
     Represents raw data of a neural assembly
@@ -11,7 +13,7 @@ class AssemblySource:
         self.actions: List[str] = []
         self.observations: List[str] = []
         self.tokens = []
-        self.doped = False
+        # self.doped = False
         self._parse()
 
     def _parse(self):
@@ -25,9 +27,12 @@ class AssemblySource:
         for part in parts:
             if part.startswith('o:'):
                 self.observations.append(part)
-        if 'DOPE' in parts:
-            self.doped = True
-            del parts[parts.index('DOPE')]
+        # if KEY_DOPED in parts:
+        #     idx = parts.index(KEY_DOPED)
+        #     pre_part = parts[idx - 1]
+        #     pre_part
+        #     self.doped = True
+        #     del parts[parts.index('DOPE')]
         for vis in self.visuals:
             del parts[parts.index(vis)]
         # for action in self.actions:

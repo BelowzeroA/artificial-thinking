@@ -61,7 +61,17 @@ class Network:
 
         self.assembly_builder.build_new_assemblies()
 
+        self._check_run_dopamine_flood()
+
         self._report_fired_assemblies()
+
+    def _check_run_dopamine_flood(self):
+        doped_assemblies = [na for na in self.container.assemblies if na.fired and na.doped]
+        not_doped_assemblies = [na for na in self.container.assemblies if na.fired and not na.doped]
+        if doped_assemblies:
+            for na in not_doped_assemblies:
+                if na.area.absorbs_dopamine:
+                    na.on_doped(self.current_tick)
 
     def _update_weights(self):
         for neuron in self.container.neurons:
