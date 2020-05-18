@@ -1,0 +1,5 @@
+1: sc:PetRecognition
+
+2: v:kitty it's a kitty
+20: v:dog it's a dog
+40: v:bunny it's a bunny

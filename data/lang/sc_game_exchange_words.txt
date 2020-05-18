@@ -1,0 +1,6 @@
+1: hey, let's play a game!
+20: if I say cat you say dog
+40: if I say dog you say cat
+60: ok
+70: cat
+80: dog

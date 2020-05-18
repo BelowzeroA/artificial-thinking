@@ -1,0 +1,38 @@
+v:mom
+[v:fish fish]
+
+v:mom
+[v:bird bird]
+
+v:mom
+[v:cow cow]
+
+v:mom
+[v:bunny bunny]
+
+v:mom
+v:fish
+what is it
+fish
+
+v:mom
+v:bird
+what is it
+bird
+
+v:mom
+v:cow
+what is it
+cow
+
+v:mom
+[v:duck duck]
+
+v:mom
+[v:dog dog]
+
+dog say bark
+
+duck say quack
+
+cow say mooo

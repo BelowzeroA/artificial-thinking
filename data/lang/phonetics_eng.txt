@@ -8,7 +8,7 @@ warm w o r m
 summer s a m e r
 day d e i
 grasshopper g r ae s h o p e r
-apple ae p l t
+apple ae p l
 approach ae p r o u ch
 it's i t s
 an e n
@@ -35,3 +35,13 @@ for f o r
 winter w i n t e r
 ball b oo l
 take t e i k
+kitty k i t i
+dog d o g
+pig p i g
+bunny b a n i
+gone g a n
+has h ae z
+tail t e i l
+is i s
+says s e i z
+meow m ae w

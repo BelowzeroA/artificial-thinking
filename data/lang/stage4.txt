@@ -1,0 +1,5 @@
+1: v:ball o:grabbed a:put o:in_mouth DOPE
+10: v:ball o:grabbed
+20: v:ball o:not_grabbed a:grab o:grabbed
+40: v:ball o:not_grabbed
+50: v:ball o:not_reachable take o:not_grabbed
