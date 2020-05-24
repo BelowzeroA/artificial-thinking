@@ -15,7 +15,6 @@ class NeuralAssembly:
         self.fired = False
         self.container: NeuroContainer = container
         self.perceptual = False
-        self.is_link = False
         self.is_combined = False
         self.is_joint = False
         self.doped = False
@@ -23,7 +22,7 @@ class NeuralAssembly:
         self.firing_history = {}
         self.potential = 0
         self.threshold = 2
-        self.capacity = 0
+        # self.capacity = 0
         self.formed_at = 0
         self.last_fired_at = 0
         self.hierarchy_level = 0
@@ -67,7 +66,7 @@ class NeuralAssembly:
         self.fired = False
         area = self.area
         if area.winner_takes_it_all_strategy:
-            if self.is_winner or (self.potential >= self.threshold and self.is_link):
+            if self.is_winner:
                 self.firing = True
         else:
             if self.potential >= self.threshold or current_tick in self.firing_ticks:
@@ -75,9 +74,9 @@ class NeuralAssembly:
 
         if self.firing:
             self.last_fired_at = current_tick
-            self.capacity += 1
-            if self.capacity > HyperParameters.max_capacity:
-                self.capacity = HyperParameters.max_capacity
+            # self.capacity += 1
+            # if self.capacity > HyperParameters.max_capacity:
+            #     self.capacity = HyperParameters.max_capacity
             self.fired = True
             self.firing = False
             connections = self.container.get_assembly_outgoing_connections(na=self)

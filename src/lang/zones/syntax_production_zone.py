@@ -20,12 +20,6 @@ class SyntaxProductionZone(NeuralZone):
 
     def prepare_assemblies(self, source, tick: int):
         current_planned_tick = tick
-        for word in source.words:
-            current_planned_tick = self._prepare_assemblies_for_word(word, current_planned_tick)
-            current_planned_tick += 1
-
-    def _prepare_assemblies_for_word(self, word: str, tick: int) -> int:
-        return self.builder.build_phonemes_from_word(word, area=self._input_area, starting_tick=tick)
 
     def before_assemblies_update(self, tick: int):
         pass

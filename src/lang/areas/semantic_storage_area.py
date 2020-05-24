@@ -6,12 +6,13 @@ class SemanticStorageArea(NeuralArea):
     """
      Represents a single layer in the hierarchy of PhoneticRecognitionZone
      """
-    def __init__(self, name: str, agent):
+    def __init__(self, name: str, agent, zone):
         from lang.assembly_builder import AssemblyBuilder
-        super().__init__(name, agent)
+        super().__init__(name, agent, zone)
         self.phonetics = {}
         self.threshold = HyperParameters.phonetic_recognition_threshold
         self.builder: AssemblyBuilder = None
+        self.allows_assembly_merging = True
 
     def connect_to(self, source_area: NeuralArea):
         self.upstream_areas.append(source_area)

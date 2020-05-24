@@ -10,7 +10,9 @@ from vision.parameters import SabParameters
 
 
 class NeuroContainer:
-
+    """
+    Collects neural assemblies, connections, neural areas and neural zones
+    """
     def __init__(self, agent: 'Agent'):
         from vision.self_sustained_block import SelfSustainedActivityBlock
         from lang.neural_area import NeuralArea
@@ -27,9 +29,9 @@ class NeuroContainer:
         self.current_label = None
         self.network = None
         self.areas: List[NeuralArea] = []
-        self.default_area = None
-        self.phonological_memory: 'PhonologicalMemory' = None
-        self.vocal_area: 'VocalArea' = None
+        # self.default_area = None
+        # self.phonological_memory: 'PhonologicalMemory' = None
+        # self.vocal_area: 'VocalArea' = None
 
     def append_neuron(self, neuron):
         self.neurons.append(neuron)
@@ -122,12 +124,10 @@ class NeuroContainer:
         int_number = max([int(sab._id) for sab in self.sabs]) + 1
         return f'{int_number:03d}'
 
-
     def next_clump_id(self):
         if len(self.clumps) == 0:
             return '1'
         return str(max([int(clump._id) for clump in self.clumps]) + 1)
-
 
     def get_sab_by_id(self, id: str):
         sabs = [sab for sab in self.sabs if sab._id == id]
@@ -138,8 +138,8 @@ class NeuroContainer:
     def get_neural_area_assemblies(self, area: NeuralArea) -> Iterable[NeuralAssembly]:
         return [na for na in self.assemblies if na.area == area]
 
-    def get_assembly_by_pattern(self, pattern):
-        assemblies = [na for na in self.assemblies if na.pattern == pattern]
+    def get_assembly_by_pattern(self, pattern, area):
+        assemblies = [na for na in self.assemblies if na.pattern == pattern and na.area == area]
         if assemblies:
             return assemblies[0]
         return None
@@ -164,11 +164,9 @@ class NeuroContainer:
                 thresholds_dict[neuron] = neuron.threshold
         return thresholds_dict
 
-
     def set_thresholds(self, thresholds):
         for neuron in thresholds:
             neuron.threshold = thresholds[neuron]
-
 
     def load(self, filename):
         with open(filename, 'r', encoding='utf-8') as data_file:
@@ -188,13 +186,11 @@ class NeuroContainer:
             synapse.weight = entry['weight']
             self.synapses.append(synapse)
 
-
     def get_clump_by_pattern(self, pattern):
         clumps = [clump for clump in self.clumps if clump.pattern == pattern]
         if clumps:
             return clumps[0]
         return None
-
 
     def get_neuron_outgoing_connections(self, neuron):
         return [conn for conn in self.synapses if conn.source == neuron]
@@ -210,7 +206,6 @@ class NeuroContainer:
         if connections:
             return connections[0]
         return None
-
 
     def are_nodes_connected(self, node1, node2, primary_only=False):
         c1 = [conn for conn in self.connections if conn.source == node1 and conn.target == node2 and

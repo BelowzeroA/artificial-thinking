@@ -14,6 +14,7 @@ class VisualRecognitionZone(NeuralZone):
     """
     def __init__(self, agent: 'Agent'):
         super().__init__(name=type(self).__name__, agent=agent)
+        self.short_name = 'VR'
         self.num_areas = 1
         self.areas: List[VisualRecognitionArea] = []
         self._input_area: VisualRecognitionArea = None
@@ -24,7 +25,7 @@ class VisualRecognitionZone(NeuralZone):
 
     def prepare_areas(self):
         for i in range(self.num_areas):
-            area = VisualRecognitionArea(f'area_{i}', self.agent)
+            area = VisualRecognitionArea(f'area_{i}', self.agent, self)
             self.agent.container.add_area(area)
             if i == 0:
                 self._input_area = area

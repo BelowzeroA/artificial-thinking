@@ -99,7 +99,7 @@ class AssemblyBuilder:
         pattern = self._make_joint_pattern(nas)
         max_level_na = max(nas, key=lambda na: na.hierarchy_level)
         joint_na = self.find_create_assembly(pattern, area=area)
-        joint_na.capacity = self._get_joint_capacity(nas)
+        # joint_na.capacity = self._get_joint_capacity(nas)
         joint_na.is_joint = True
         joint_na.hierarchy_level = max_level_na.hierarchy_level + 1
         return joint_na
@@ -108,7 +108,7 @@ class AssemblyBuilder:
     def _make_joint_pattern(nas: List[NeuralAssembly]) -> str:
         nas_priorities = []
         for na in nas:
-            priority = 0 if na.is_link else 1
+            priority = 0 if na.area.allows_projection else 1
             nas_priorities.append((na, priority))
         nas_priorities.sort(key=lambda x: x[1])
         patterns = [t[0].cleaned_pattern for t in nas_priorities]
@@ -128,8 +128,8 @@ class AssemblyBuilder:
         pattern = '+'.join(cleaned_patterns)
         return pattern
 
-    def find_create_assembly(self, pattern: str, area: NeuralArea = None) -> NeuralAssembly:
-        na = self.container.get_assembly_by_pattern(pattern)
+    def find_create_assembly(self, pattern: str, area: NeuralArea) -> NeuralAssembly:
+        na = self.container.get_assembly_by_pattern(pattern, area)
         if not na:
             na = self.container.create_assembly(pattern)
             prefix = self._get_pattern_prefix(pattern)
@@ -140,7 +140,7 @@ class AssemblyBuilder:
             na.area = area
             if prefix in PERCEPTUAL_PREFIXES:
                 na.perceptual = True
-                na.capacity = HyperParameters.initial_receptive_assembly_capacity
+                # na.capacity = HyperParameters.initial_receptive_assembly_capacity
         return na
 
     @staticmethod
@@ -164,16 +164,23 @@ class AssemblyBuilder:
                 self._create_linked_assembly(source_na=na, capacity=linked_capacity)
         return na
 
-    def _create_linked_assembly(self, source_na: NeuralAssembly, capacity: int) -> NeuralAssembly:
-        linked1 = self.find_create_assembly(f'{LINKED_PREFIX}:{source_na.pattern}', area=source_na.area)
-        linked1.perceptual = source_na.perceptual
-        linked1.is_link = True
-        linked1.area = source_na.area
-        linked1.capacity = capacity
-        linked1.fill_contributors([source_na])
-        connection = self.check_create_connection(source=source_na, target=linked1)
+    # def _create_linked_assembly(self, source_na: NeuralAssembly, capacity: int) -> NeuralAssembly:
+    #     linked1 = self.find_create_assembly(f'{LINKED_PREFIX}:{source_na.pattern}', area=source_na.area)
+    #     linked1.perceptual = source_na.perceptual
+    #     linked1.is_link = True
+    #     linked1.area = source_na.area
+    #     linked1.capacity = capacity
+    #     linked1.fill_contributors([source_na])
+    #     connection = self.check_create_connection(source=source_na, target=linked1)
+    #     connection.multiplier = 2
+    #     return linked1
+
+    def _create_projected_assembly(self, source_na: NeuralAssembly, area: NeuralArea) -> NeuralAssembly:
+        na = self.find_create_assembly(source_na.pattern, area=area)
+        # linked1.fill_contributors([source_na])
+        connection = self.check_create_connection(source=source_na, target=na)
         connection.multiplier = 2
-        return linked1
+        return na
 
     def check_create_connection(self, source: NeuralAssembly, target: NeuralAssembly) -> Connection:
         connection = self.container.get_connection_between_nodes(source=source, target=target)
@@ -247,10 +254,11 @@ class AssemblyBuilder:
             raise ValueError(f'word "{word}" is not in the phonetics dictionary')
         for i in range(len(phonemes)):
             firing_ticks1 = [tick for tick in range(starting_tick + i, starting_tick + i + firing_count)]
-            na1 = self._find_create_assembly_chain(
-                pattern=self._append_phoneme_prefix(phonemes[i]),
-                area=area,
-                capacity=HyperParameters.initial_receptive_assembly_capacity)
+            # na1 = self._find_create_assembly_chain(
+            #     pattern=self._append_phoneme_prefix(phonemes[i]),
+            #     area=area,
+            #     capacity=HyperParameters.initial_receptive_assembly_capacity)
+            na1 = self.find_create_assembly(pattern=self._append_phoneme_prefix(phonemes[i]), area=area)
             na1.firing_ticks.extend(firing_ticks1)
         return starting_tick + len(phonemes)
 
@@ -325,14 +333,14 @@ class AssemblyBuilder:
                 if downstream_assembly_existed:
                     continue
                 joint_area = self._get_common_downstream_area(combination)
-                joint_capacity = self._get_joint_capacity(combination)
-                if joint_area and joint_capacity >= HyperParameters.minimal_capacity:
+                # joint_capacity = self._get_joint_capacity(combination)
+                if joint_area and joint_area.allows_assembly_merging:
                     joint_na = self._create_joint_assembly(combination, joint_area)
                     joint_na.formed_at = self.container.current_tick
-                    joint_na.fill_contributors(combination)
+                    # joint_na.fill_contributors(combination)
                     for na in combination:
                         self.check_create_connection(na, joint_na)
-                    self._create_linked_assembly(joint_na, capacity=joint_capacity)
+                    # self._create_linked_assembly(joint_na, capacity=joint_capacity)
                     print(f'area {joint_area} joint assembly {joint_na} created')
 
     def _get_common_downstream_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
@@ -352,29 +360,25 @@ class AssemblyBuilder:
                         downstream_assembly.contributors.append(na)
         return downstream_assembly is not None
 
-    def _assemblies_can_be_connected(self, source: NeuralAssembly, target: NeuralAssembly) -> bool:
+    @staticmethod
+    def _assemblies_can_be_connected(source: NeuralAssembly, target: NeuralAssembly) -> bool:
         return source.area in target.area.upstream_areas
 
     def _build_linked_assemblies(self):
         """
         builds linked assemblies if necessary.
-        Linked assembly is an assembly that fires one tick later after the master assembly
+        Linked assembly is an assembly that fires one tick later after a master assembly
         :return:
         """
-        fired_assemblies = [na for na in self.container.assemblies if na.fired and not na.perceptual and not na.is_link]
+        fired_assemblies = [na for na in self.container.assemblies if na.fired]
         for na in fired_assemblies:
-            if not na.area.create_linked_assembly:
-                continue
-            linked_na = self._find_linked_assembly(na)
-            if linked_na:
-                continue
-            linked_capacity = na.capacity // HyperParameters.linked_assembly_capacity_rate
-            hier_level = na.hierarchy_level - 1
-            if hier_level <= 0:
-                hier_level = 1
-            linked_capacity = linked_capacity // hier_level
-            if linked_capacity >= HyperParameters.minimal_capacity:
-                self._create_linked_assembly(source_na=na, capacity=linked_capacity)
+            connected_assemblies = [conn.target for conn in self.container.get_assembly_outgoing_connections(na)]
+            projected_areas = na.area.get_projected_areas()
+            for projected_area in projected_areas:
+                already_connected = [assembly for assembly in connected_assemblies if assembly.area == projected_area]
+                if already_connected:
+                    continue
+                self._create_projected_assembly(source_na=na, area=projected_area)
 
     def build_new_assemblies(self):
         self._build_linked_assemblies()

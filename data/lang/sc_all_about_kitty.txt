@@ -1,6 +1,7 @@
 1: sc:PetRecognition
 
 2: v:kitty it's a kitty
-20: v:kitty kitty has a tail
-40: v:kitty kitty is gone
-60: v:kitty kitty says meow
+20: v:kitty it's a kitty
+40: v:kitty kitty has a tail
+60: v:kitty kitty is gone
+80: v:kitty kitty says meow
