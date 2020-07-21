@@ -332,8 +332,7 @@ class AssemblyBuilder:
                 downstream_assembly_existed = self._check_update_downstream_assembly(combination)
                 if downstream_assembly_existed:
                     continue
-                joint_area = self._get_common_downstream_area(combination)
-                # joint_capacity = self._get_joint_capacity(combination)
+                joint_area = self._get_common_projected_area(combination)
                 if joint_area and joint_area.allows_assembly_merging:
                     joint_na = self._create_joint_assembly(combination, joint_area)
                     joint_na.formed_at = self.container.current_tick
@@ -343,10 +342,10 @@ class AssemblyBuilder:
                     # self._create_linked_assembly(joint_na, capacity=joint_capacity)
                     print(f'area {joint_area} joint assembly {joint_na} created')
 
-    def _get_common_downstream_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
+    def _get_common_projected_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
         areas = set([a.area for a in fired_assemblies])
         for area in self.container.areas:
-            if set(area.upstream_areas) == areas:
+            if areas.issubset(set(area.exciting_areas)):
                 return area
         return None
 
@@ -362,7 +361,7 @@ class AssemblyBuilder:
 
     @staticmethod
     def _assemblies_can_be_connected(source: NeuralAssembly, target: NeuralAssembly) -> bool:
-        return source.area in target.area.upstream_areas
+        return source.area in target.area.exciting_areas
 
     def _build_linked_assemblies(self):
         """

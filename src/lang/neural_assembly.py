@@ -65,6 +65,9 @@ class NeuralAssembly:
     def update(self, current_tick: int):
         self.fired = False
         area = self.area
+        if current_tick in area.inhibited_at_ticks:
+            self.potential = 0
+            return
         if area.winner_takes_it_all_strategy:
             if self.is_winner:
                 self.firing = True
@@ -74,9 +77,6 @@ class NeuralAssembly:
 
         if self.firing:
             self.last_fired_at = current_tick
-            # self.capacity += 1
-            # if self.capacity > HyperParameters.max_capacity:
-            #     self.capacity = HyperParameters.max_capacity
             self.fired = True
             self.firing = False
             connections = self.container.get_assembly_outgoing_connections(na=self)
@@ -84,9 +84,6 @@ class NeuralAssembly:
                 conn.pulsing = True
             self.firing_history[self.container.current_tick] = list(self.fired_contributors)
             area.on_fire(self)
-            # if self.firing_count > 1 and self.potential >= self.threshold:
-            #     new_firing_ticks = [tick + 1 for tick in range(current_tick, current_tick + self.firing_count - 1)]
-            #     self.firing_ticks.extend(new_firing_ticks)
         else:
             self.fired_contributors.clear()
         self.potential = 0
@@ -106,7 +103,7 @@ class NeuralAssembly:
 
     def on_doped(self, current_tick: int):
         """
-        Invoked whenever dopamine gets to the assembly
+        Invoked whenever dopamine reaches the assembly
         :return:
         """
         self.doped = True

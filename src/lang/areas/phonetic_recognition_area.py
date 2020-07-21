@@ -12,8 +12,9 @@ class PhoneticRecognitionArea(NeuralArea):
         self.phonetics = {}
         self.threshold = HyperParameters.phonetic_recognition_threshold
         self.builder: AssemblyBuilder = None
-        self.winner_takes_it_all_strategy = True
+        self.winner_takes_it_all_strategy = False
         self.allows_assembly_merging = True
+        self.inhibits_itself = False
 
     def before_assemblies_update(self, tick: int):
         assemblies = [na for na in self.agent.container.assemblies if na.area == self]
@@ -25,3 +26,10 @@ class PhoneticRecognitionArea(NeuralArea):
                 na = max_assembly_potential[0]
                 na.is_winner = True
 
+    def on_fire(self, na: 'NeuralAssembly'):
+        inhibited_areas = [a for a in self.agent.container.areas if self in a.inhibiting_areas]
+        target_tick = self.agent.environment.current_tick + 1
+        for area in inhibited_areas:
+            area.inhibited_at_ticks.append(target_tick)
+        if self.inhibits_itself:
+            self.inhibited_at_ticks.append(target_tick)

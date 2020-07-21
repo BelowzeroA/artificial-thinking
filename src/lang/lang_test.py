@@ -14,7 +14,7 @@ def main():
     env = Environment(**config)
     agent = Agent(environment=env, **config)
     env.add_agent(agent)
-    env.run(max_ticks=80)
+    env.run(max_ticks=100)
 
 
 if __name__ == '__main__':

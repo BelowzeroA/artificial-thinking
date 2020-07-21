@@ -31,7 +31,8 @@ class SemanticStorageZone(NeuralZone):
             self.areas.append(area)
             if i > 0:
                 prev_area = self.areas[i - 1]
-                area.upstream_areas.append(prev_area)
+                # area.upstream_areas.append(prev_area)
+                area.add_exciting_area(prev_area)
 
     def connect_to(self, vr: VisualRecognitionZone, pr: PhoneticRecognitionZone):
         for vr_area in vr.output_areas():

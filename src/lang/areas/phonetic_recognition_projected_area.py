@@ -26,3 +26,4 @@ class PhoneticRecognitionProjectedArea(NeuralArea):
                 na = max_assembly_potential[0]
                 na.is_winner = True
 
+

@@ -15,21 +15,26 @@ class NeuralArea:
         self.zone = zone
         self.builder: 'AssemblyBuilder' = self.agent.assembly_builder
         self.modalities = []
-        self.upstream_areas: List[NeuralArea] = []
+        self.exciting_areas: List[NeuralArea] = []
+        self.inhibiting_areas: List[NeuralArea] = []
         self.absorbs_dopamine = False
         self.winner_takes_it_all_strategy = False
         self.double_activation_from: List[NeuralArea] = []
         self.allows_assembly_merging = False
         self.allows_projection = False
+        self.inhibited_at_ticks = []
 
     def corresponds_to_prefix(self, prefix: str) -> bool:
         return prefix in self.modalities
 
-    def add_upstream_area(self, area):
-        self.upstream_areas.append(area)
+    def add_exciting_area(self, area):
+        self.exciting_areas.append(area)
+
+    def add_inhibiting_area(self, area):
+        self.inhibiting_areas.append(area)
 
     def get_projected_areas(self):
-        return [area for area in self.agent.container.areas if self in area.upstream_areas and area.allows_projection]
+        return [area for area in self.agent.container.areas if self in area.exciting_areas and area.allows_projection]
 
     @classmethod
     def add(cls, name, agent, zone) -> 'NeuralArea':

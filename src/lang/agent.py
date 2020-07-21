@@ -141,6 +141,9 @@ class Agent:
         for na in self.container.assemblies:
             if na.fired:
                 print(f'area {na.area} assembly {na} fired')
+        for area in self.container.areas:
+            if self.environment.current_tick in area.inhibited_at_ticks:
+                print(f'area {area} is inhibited')
 
     def fire_input(self, sample):
         for nrn in sample['input']:
@@ -254,7 +257,7 @@ class Agent:
         self.container.add_zone(pr)
         self.container.add_zone(speech_controller)
         self.container.add_zone(thought_controller)
-        self.container.add_zone(vr)
+        # self.container.add_zone(vr)
         self.container.add_zone(syntax_production)
         self.container.add_zone(semantic)
 
