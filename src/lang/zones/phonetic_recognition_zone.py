@@ -26,7 +26,7 @@ class PhoneticRecognitionZone(NeuralZone):
         if ind > 0:
             area.inhibits_itself = True
         areas = [area]
-        for j in range(self.num_layers - ind + 2):
+        for j in range(self.num_layers - ind + 1):
             projected_area = PhoneticRecognitionProjectedArea.add(f'proj_area_{ind + 1}_{j + 1}', self.agent, self)
             prev_area = area if j == 0 else areas[j]
             projected_area.add_exciting_area(prev_area)
@@ -55,28 +55,8 @@ class PhoneticRecognitionZone(NeuralZone):
                     # area_zero.add_exciting_area(prev_prev_layer_areas[0])
             else:
                 self._input_area = area_zero
-                
-    # def prepare_areas0(self):
-    #     self._output_area = PhoneticRecognitionProjectedArea.add(f'output', self.agent, self)
-    #     self._output_area.allows_assembly_merging = False
-    #     self._output_area.winner_takes_it_all_strategy = True
-    #     for i in range(self.num_layers):
-    #         area = PhoneticRecognitionArea.add(f'area_{i}', self.agent, self)
-    #         for j in range(4 - i):
-    #             projected_area = PhoneticRecognitionProjectedArea.add(f'proj_area_{i}_{j}', self.agent, self)
-    #             projected_area.add_upstream_area(area)
-    #         self.areas.append(area)
-    #         self.projected_areas.append(projected_area)
-    #         if i == 0:
-    #             self._input_area = area
-    #             area.winner_takes_it_all_strategy = False
-    #         else:
-    #             self._output_area.add_upstream_area(area)
-    #         if i > 0:
-    #             prev_area = self.areas[i - 1]
-    #             prev_projected_area = self.projected_areas[i - 1]
-    #             area.add_upstream_area(prev_area)
-    #             area.add_upstream_area(prev_projected_area)
+            last_layer_area = areas[-1:][0]
+            self._output_area.add_exciting_area(last_layer_area)
 
     def output_areas(self):
         return [self._output_area]

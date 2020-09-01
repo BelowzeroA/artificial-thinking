@@ -4,7 +4,9 @@
 20: v:kitty it's a kitty
 40: v:kitty it's a kitty
 60: v:kitty it's a kitty
-80: kitty
+80: v:kitty it's a kitty
+100: v:kitty it's a kitty
+140: kitty
 160: v:kitty kitty has a tail
 180: v:kitty kitty is gone
 200: v:kitty kitty says meow

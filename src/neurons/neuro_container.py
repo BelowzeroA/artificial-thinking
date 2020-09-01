@@ -3,6 +3,7 @@ from typing import List, Iterable
 
 from lang.connection import Connection
 from lang.neural_area import NeuralArea
+from lang.neural_gate import NeuralGate
 from lang.neural_zone import NeuralZone
 from neurons.synapse import Synapse
 from neurons.neuron import Neuron
@@ -20,7 +21,8 @@ class NeuroContainer:
         self.agent = agent
         self.neurons: List[Neuron] = []
         self.assemblies = []
-        self.zones: List[NeuralZone]  = []
+        self.zones: List[NeuralZone] = []
+        self.gates: List[NeuralGate] = []
         self.sabs: List[SelfSustainedActivityBlock] = []
         self.synapses: List[Synapse] = []
         self.connections: List[Connection] = []
@@ -44,6 +46,9 @@ class NeuroContainer:
 
     def add_zone(self, zone: NeuralZone):
         self.zones.append(zone)
+
+    def add_gate(self, gate: NeuralGate):
+        self.gates.append(gate)
 
     def create_neuron(self):
         neuron = Neuron(id=self.next_neuron_id(), container=self)
@@ -134,6 +139,12 @@ class NeuroContainer:
         if sabs:
             return sabs[0]
         return None
+
+    def get_neural_gate(self, source_area, target_area):
+        gates = [gate for gate in self.gates if gate.source == source_area and gate.target == target_area]
+        if len(gates) == 0:
+            return None
+        return gates[0]
 
     def get_neural_area_assemblies(self, area: NeuralArea) -> Iterable[NeuralAssembly]:
         return [na for na in self.assemblies if na.area == area]

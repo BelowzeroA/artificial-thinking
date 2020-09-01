@@ -33,6 +33,9 @@ class NeuralArea:
     def add_inhibiting_area(self, area):
         self.inhibiting_areas.append(area)
 
+    def connect_to(self, source_area: 'NeuralArea'):
+        self.exciting_areas.append(source_area)
+
     def get_projected_areas(self):
         return [area for area in self.agent.container.areas if self in area.exciting_areas and area.allows_projection]
 

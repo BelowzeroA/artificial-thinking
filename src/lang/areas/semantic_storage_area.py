@@ -14,9 +14,6 @@ class SemanticStorageArea(NeuralArea):
         self.builder: AssemblyBuilder = None
         self.allows_assembly_merging = True
 
-    def connect_to(self, source_area: NeuralArea):
-        self.exciting_areas.append(source_area)
-
     def before_assemblies_update(self, tick: int):
         assemblies = [na for na in self.agent.container.assemblies if na.area == self and not na.is_link]
         if assemblies:
