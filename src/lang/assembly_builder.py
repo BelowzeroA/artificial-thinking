@@ -151,29 +151,18 @@ class AssemblyBuilder:
             return pattern[:pattern.index(':')]
         return None
 
-    def _find_create_assembly_chain(self, pattern: str, area: NeuralArea, capacity: int) -> NeuralAssembly:
-        na = self.find_create_assembly(pattern, area)
-        na.capacity = capacity
-        if na.area.create_linked_assembly:
-            linked_capacity = na.capacity // HyperParameters.linked_assembly_capacity_rate
-            hier_level = na.hierarchy_level - 1
-            if hier_level <= 0:
-                hier_level = 1
-            linked_capacity = linked_capacity // hier_level
-            if linked_capacity >= HyperParameters.minimal_capacity:
-                self._create_linked_assembly(source_na=na, capacity=linked_capacity)
-        return na
-
-    # def _create_linked_assembly(self, source_na: NeuralAssembly, capacity: int) -> NeuralAssembly:
-    #     linked1 = self.find_create_assembly(f'{LINKED_PREFIX}:{source_na.pattern}', area=source_na.area)
-    #     linked1.perceptual = source_na.perceptual
-    #     linked1.is_link = True
-    #     linked1.area = source_na.area
-    #     linked1.capacity = capacity
-    #     linked1.fill_contributors([source_na])
-    #     connection = self.check_create_connection(source=source_na, target=linked1)
-    #     connection.multiplier = 2
-    #     return linked1
+    # def _find_create_assembly_chain(self, pattern: str, area: NeuralArea, capacity: int) -> NeuralAssembly:
+    #     na = self.find_create_assembly(pattern, area)
+    #     na.capacity = capacity
+    #     if na.area.create_linked_assembly:
+    #         linked_capacity = na.capacity // HyperParameters.linked_assembly_capacity_rate
+    #         hier_level = na.hierarchy_level - 1
+    #         if hier_level <= 0:
+    #             hier_level = 1
+    #         linked_capacity = linked_capacity // hier_level
+    #         if linked_capacity >= HyperParameters.minimal_capacity:
+    #             self._create_linked_assembly(source_na=na, capacity=linked_capacity)
+    #     return na
 
     def _create_projected_assembly(self, source_na: NeuralAssembly, area: NeuralArea) -> NeuralAssembly:
         na = self.find_create_assembly(source_na.pattern, area=area)
@@ -200,51 +189,51 @@ class AssemblyBuilder:
         for word in overall_words:
             self.build_phonemes_from_word(word)
 
-    def build_phonemes_from_word_old(self, word: str, area, starting_tick: int):
-        build_chain = False
-        firing_count = HyperParameters.phonological_na_firing_count
-        if word in self.phonetics:
-            phonemes = self.phonetics[word]
-            if len(phonemes) > 1:
-                build_chain = True
-            else:
-                word = phonemes[0]
-
-        if build_chain:
-            for i in range(len(phonemes) - 1):
-                firing_ticks1 = [tick for tick in range(starting_tick + i, starting_tick + i + firing_count)]
-                na1 = self._find_create_assembly_chain(
-                    pattern=self._append_phoneme_prefix(phonemes[i]),
-                    area=area,
-                    capacity=HyperParameters.initial_receptive_assembly_capacity)
-
-                na1.firing_ticks.extend(firing_ticks1)
-                na1_linked = self._find_linked_assembly(na1)
-                na2 = self._find_create_assembly_chain(
-                    pattern=self._append_phoneme_prefix(phonemes[i + 1]),
-                    area=area,
-                    capacity=HyperParameters.initial_receptive_assembly_capacity)
-                firing_ticks2 = [tick for tick in range(starting_tick + i + 1, starting_tick + i + 1 + firing_count)]
-                na2.firing_ticks.extend(firing_ticks2)
-
-                combined_pattern = phonemes[i] + phonemes[i + 1]
-                combined_capacity = self._get_joint_capacity([na1_linked, na2])
-                combined_assembly = self._find_create_assembly_chain(
-                    pattern=combined_pattern,
-                    area=area,
-                    capacity=combined_capacity)
-                combined_assembly.fill_contributors([na1, na1_linked, na2])
-                combined_assembly.is_combined = True
-                self.check_create_connection(source=na1_linked, target=combined_assembly)
-                self.check_create_connection(source=na2, target=combined_assembly)
-        else:
-            na = self._find_create_assembly_chain(
-                pattern=self._append_phoneme_prefix(word),
-                area=area,
-                capacity=HyperParameters.initial_receptive_assembly_capacity)
-            firing_ticks = [tick for tick in range(starting_tick, starting_tick + firing_count)]
-            na.firing_ticks = firing_ticks
-            # self._create_linked_assembly(source_na=na, capacity=HyperParameters.initial_receptive_assembly_capacity)
+    # def build_phonemes_from_word_old(self, word: str, area, starting_tick: int):
+    #     build_chain = False
+    #     firing_count = HyperParameters.phonological_na_firing_count
+    #     if word in self.phonetics:
+    #         phonemes = self.phonetics[word]
+    #         if len(phonemes) > 1:
+    #             build_chain = True
+    #         else:
+    #             word = phonemes[0]
+    #
+    #     if build_chain:
+    #         for i in range(len(phonemes) - 1):
+    #             firing_ticks1 = [tick for tick in range(starting_tick + i, starting_tick + i + firing_count)]
+    #             na1 = self._find_create_assembly_chain(
+    #                 pattern=self._append_phoneme_prefix(phonemes[i]),
+    #                 area=area,
+    #                 capacity=HyperParameters.initial_receptive_assembly_capacity)
+    #
+    #             na1.firing_ticks.extend(firing_ticks1)
+    #             na1_linked = self._find_linked_assembly(na1)
+    #             na2 = self._find_create_assembly_chain(
+    #                 pattern=self._append_phoneme_prefix(phonemes[i + 1]),
+    #                 area=area,
+    #                 capacity=HyperParameters.initial_receptive_assembly_capacity)
+    #             firing_ticks2 = [tick for tick in range(starting_tick + i + 1, starting_tick + i + 1 + firing_count)]
+    #             na2.firing_ticks.extend(firing_ticks2)
+    #
+    #             combined_pattern = phonemes[i] + phonemes[i + 1]
+    #             combined_capacity = self._get_joint_capacity([na1_linked, na2])
+    #             combined_assembly = self._find_create_assembly_chain(
+    #                 pattern=combined_pattern,
+    #                 area=area,
+    #                 capacity=combined_capacity)
+    #             combined_assembly.fill_contributors([na1, na1_linked, na2])
+    #             combined_assembly.is_combined = True
+    #             self.check_create_connection(source=na1_linked, target=combined_assembly)
+    #             self.check_create_connection(source=na2, target=combined_assembly)
+    #     else:
+    #         na = self._find_create_assembly_chain(
+    #             pattern=self._append_phoneme_prefix(word),
+    #             area=area,
+    #             capacity=HyperParameters.initial_receptive_assembly_capacity)
+    #         firing_ticks = [tick for tick in range(starting_tick, starting_tick + firing_count)]
+    #         na.firing_ticks = firing_ticks
+    #         # self._create_linked_assembly(source_na=na, capacity=HyperParameters.initial_receptive_assembly_capacity)
 
     def build_phonemes_from_word(self, word: str, area, starting_tick: int):
         firing_count = HyperParameters.phonological_na_firing_count
@@ -254,10 +243,6 @@ class AssemblyBuilder:
             raise ValueError(f'word "{word}" is not in the phonetics dictionary')
         for i in range(len(phonemes)):
             firing_ticks1 = [tick for tick in range(starting_tick + i, starting_tick + i + firing_count)]
-            # na1 = self._find_create_assembly_chain(
-            #     pattern=self._append_phoneme_prefix(phonemes[i]),
-            #     area=area,
-            #     capacity=HyperParameters.initial_receptive_assembly_capacity)
             na1 = self.find_create_assembly(pattern=self._append_phoneme_prefix(phonemes[i]), area=area)
             na1.firing_ticks.extend(firing_ticks1)
         return starting_tick + len(phonemes)

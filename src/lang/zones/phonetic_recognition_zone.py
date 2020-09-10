@@ -26,7 +26,7 @@ class PhoneticRecognitionZone(NeuralZone):
         if ind > 0:
             area.inhibits_itself = True
         areas = [area]
-        for j in range(self.num_layers - ind + 1):
+        for j in range(self.num_layers * 2 - ind - 3):
             projected_area = PhoneticRecognitionProjectedArea.add(f'proj_area_{ind + 1}_{j + 1}', self.agent, self)
             prev_area = area if j == 0 else areas[j]
             projected_area.add_exciting_area(prev_area)

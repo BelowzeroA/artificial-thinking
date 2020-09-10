@@ -9,6 +9,7 @@ from lang.primitives.inter_area_message import InterAreaMessage
 from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
 from lang.zones.semantic_storage_zone import SemanticStorageZone
 from lang.zones.speech_controller_zone import SpeechControllerZone
+from lang.zones.speech_production_zone import SpeechProductionZone
 from lang.zones.syntax_production_zone import SyntaxProductionZone
 from lang.zones.thought_controller_zone import ThoughtControllerZone
 from lang.zones.visual_lexicon_zone import VisualLexiconZone
@@ -30,6 +31,7 @@ class Agent:
 
         self.container.network = self
         dp = DataProvider(environment.filename)
+        environment.scenario_length = dp.scenario_length
         self.assembly_builder = AssemblyBuilder(agent=self, data_provider=dp)
         self.samples = []
         # self.current_tick = 0
@@ -264,10 +266,14 @@ class Agent:
         vl_syntax_gate = NeuralGate(agent=self, source=vl.output_area, target=syntax_production.input_area)
         self.container.add_gate(vl_syntax_gate)
 
+        speech_production = SpeechProductionZone(agent=self)
+        speech_production.connect_to([syntax_production])
+
         self.container.add_zone(vr)
         self.container.add_zone(pr)
         self.container.add_zone(speech_controller)
         self.container.add_zone(thought_controller)
         self.container.add_zone(syntax_production)
         self.container.add_zone(semantic)
+        self.container.add_zone(speech_production)
 

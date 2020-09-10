@@ -14,7 +14,9 @@ class Environment:
         self.agents = []
         self.loop_ended = False
         self.current_tick = 0
-        self._scenarios = {}
+        self._scenarios = []
+        # how many ticks the scenario will take
+        self.scenario_length = 0
         self._load_scenarios()
 
     def load(self):
@@ -26,17 +28,17 @@ class Environment:
             line = line.strip()
             if not line:
                 continue
-            colon_ind = line.index(':')
-            index = int(line[:colon_ind])
-            content = line[colon_ind + 1:].strip()
-            if not content.startswith(SCENARIO_PREFIX):
+            # colon_ind = line.index(':')
+            # index = int(line[:colon_ind])
+            # content = line[colon_ind + 1:].strip()
+            if not line.startswith(SCENARIO_PREFIX):
                 continue
-            scenario_name = content[3:].strip()
+            scenario_name = line[3:].strip()
             scenario_class_name = f'Scenario{scenario_name}'
             module_name = f'lang.scenarios.scenario_{scenario_name.lower()}'
             scenario_class = getattr(importlib.import_module(module_name), scenario_class_name)
             scenario = scenario_class(self)
-            self._scenarios[index] = scenario
+            self._scenarios.append(scenario)
 
     def add_agent(self, agent):
         self.agents.append(agent)
@@ -71,7 +73,7 @@ class Environment:
         result = False
         self.current_tick = 0
         self.reset_agents()
-        while self.current_tick <= max_ticks and not self.loop_ended:
+        while self.current_tick <= self.scenario_length and not self.loop_ended:
             self.current_tick += 1
             print('Tick {}'.format(self.current_tick))
             self.update_agents()

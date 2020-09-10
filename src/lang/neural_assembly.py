@@ -89,17 +89,17 @@ class NeuralAssembly:
         self.potential = 0
         self.is_winner = False
 
-    def fill_contributors(self, nas: List):
-        self.contributors.clear()
-        for na in nas:
-            self.contributors.append(na)
-        effective_contributors = []
-        for na in self.contributors:
-            if na.is_link and na.contributors[0] in self.contributors:
-                continue
-            effective_contributors.append(na)
-        if len(effective_contributors) > 2:
-            self.threshold = 3
+    # def fill_contributors(self, nas: List):
+    #     self.contributors.clear()
+    #     for na in nas:
+    #         self.contributors.append(na)
+    #     effective_contributors = []
+    #     for na in self.contributors:
+    #         if na.is_link and na.contributors[0] in self.contributors:
+    #             continue
+    #         effective_contributors.append(na)
+    #     if len(effective_contributors) > 2:
+    #         self.threshold = 3
 
     def on_doped(self, current_tick: int):
         """

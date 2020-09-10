@@ -13,9 +13,10 @@ class SemanticStorageArea(NeuralArea):
         self.threshold = HyperParameters.phonetic_recognition_threshold
         self.builder: AssemblyBuilder = None
         self.allows_assembly_merging = True
+        self.allows_projection = False
 
     def before_assemblies_update(self, tick: int):
-        assemblies = [na for na in self.agent.container.assemblies if na.area == self and not na.is_link]
+        assemblies = [na for na in self.agent.container.assemblies if na.area == self]
         if assemblies:
             assemblies_potentials = [(na, na.potential) for na in assemblies]
             assemblies_potentials.sort(key=lambda x: x[1], reverse=True)

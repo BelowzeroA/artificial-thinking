@@ -28,8 +28,9 @@ class SemanticStorageZone(NeuralZone):
         if ind > 0:
             area.inhibits_itself = True
         areas = [area]
-        for j in range(self.num_layers - ind + 1):
+        for j in range(self.num_layers - ind):
             projected_area = SemanticStorageArea.add(f'proj_area_{ind + 1}_{j + 1}', self.agent, self)
+            projected_area.allows_projection = True
             prev_area = area if j == 0 else areas[j]
             projected_area.add_exciting_area(prev_area)
             areas.append(projected_area)
@@ -39,6 +40,7 @@ class SemanticStorageZone(NeuralZone):
     def prepare_areas(self):
         self._output_area = SemanticStorageArea.add(f'output', self.agent, self)
         self._output_area.allows_assembly_merging = False
+        self._output_area.allows_projection = True
         self._output_area.winner_takes_it_all_strategy = True
         layer_areas = []
         for i in range(self.num_layers):
@@ -75,3 +77,4 @@ class SemanticStorageZone(NeuralZone):
     def before_assemblies_update(self, tick: int):
         for area in self.areas[1:]:
             area.before_assemblies_update(tick)
+        self._output_area.before_assemblies_update(tick)

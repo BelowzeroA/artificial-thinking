@@ -6,6 +6,7 @@ class HyperParameters:
     action_firing_span = 3
     phonological_na_firing_count = 1
     visual_firing_span = 10
+    episode_length = 20
     observation_firing_span = 3
     max_capacity = 10
     phonetic_recognition_threshold = 2

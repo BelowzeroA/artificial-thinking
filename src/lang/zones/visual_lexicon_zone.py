@@ -29,6 +29,7 @@ class VisualLexiconZone(NeuralZone):
     def prepare_areas(self):
         for i in range(self.num_areas):
             area = SemanticStorageArea(f'area_{i}', self.agent, self)
+            area.allows_assembly_merging = True
             self.agent.container.add_area(area)
             if i == 0:
                 self._input_area = area
@@ -37,7 +38,7 @@ class VisualLexiconZone(NeuralZone):
             if i > 0:
                 prev_area = self.areas[i - 1]
                 area.add_exciting_area(prev_area)
-            self._output_area = area
+        self._output_area = area
 
     def output_areas(self):
         return [self._output_area]
@@ -53,3 +54,4 @@ class VisualLexiconZone(NeuralZone):
     def before_assemblies_update(self, tick: int):
         for area in self.areas[1:]:
             area.before_assemblies_update(tick)
+        self._output_area.before_assemblies_update(tick)

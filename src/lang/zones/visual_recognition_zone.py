@@ -32,7 +32,7 @@ class VisualRecognitionZone(NeuralZone):
             self.areas.append(area)
 
     def prepare_assemblies(self, source: AssemblySource, tick: int):
-        firing_span = [t + tick for t in range(HyperParameters.visual_firing_span)]
+        firing_span = [t + tick for t in range(HyperParameters.episode_length)]
         for vis in source.visuals:
             na = self.builder.find_create_assembly(pattern=vis, area=self._input_area)
             na.firing_ticks.extend(firing_span)
