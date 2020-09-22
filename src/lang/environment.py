@@ -10,13 +10,14 @@ class Environment:
         self.config = config
         self.filename = config.get('environment_scenario_path')
         self.load()
-        self.utterances = []
+        self.utterances = {}
         self.agents = []
         self.loop_ended = False
         self.current_tick = 0
         self._scenarios = []
         # how many ticks the scenario will take
         self.scenario_length = 0
+        self.verbosity = 1
         self._load_scenarios()
 
     def load(self):
@@ -43,9 +44,11 @@ class Environment:
     def add_agent(self, agent):
         self.agents.append(agent)
 
-    def receive_utterance(self, utterance: str):
+    def receive_utterance(self, agent, utterance: str):
         print(f'Agent said: {utterance}')
-        self.utterances.append(utterance)
+        if agent not in self.utterances:
+            self.utterances[agent] = []
+        self.utterances[agent].append(utterance)
 
     def reset_agents(self):
         for agent in self.agents:
@@ -55,23 +58,24 @@ class Environment:
         for agent in self.agents:
             agent.update()
 
-    def spread_dope(self):
-        pass
+    def spread_dope(self, agent):
+        agent.receive_dope()
 
     def interact_with_agents(self):
-        if self.utterances:
-            for scenario_start_tick in self._scenarios:
-                if self.current_tick >= scenario_start_tick:
-                    scenario = self._scenarios[scenario_start_tick]
-                    scenario.respond(self.utterances)
-            # for utterance in self.utterances:
-            #     if utterance in ['ki', 'ti']:
-            #         self.spread_dope()
+        for agent in self.utterances:
+            for scenario in self._scenarios:
+                scenario.respond(agent, self.utterances[agent])
+        self.utterances.clear()
 
-    def run(self, max_ticks=100):
+    def build_predefined_assemblies(self):
+        for agent in self.agents:
+            agent.build_predefined_assemblies()
+
+    def run(self):
         self.loop_ended = False
         result = False
         self.current_tick = 0
+        self.build_predefined_assemblies()
         self.reset_agents()
         while self.current_tick <= self.scenario_length and not self.loop_ended:
             self.current_tick += 1

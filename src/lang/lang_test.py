@@ -11,9 +11,10 @@ def main():
     config = configs.MainConfig.__dict__
 
     env = Environment(**config)
+    env.verbosity = 0
     agent = Agent(environment=env, **config)
     env.add_agent(agent)
-    env.run(max_ticks=220)
+    env.run()
 
 
 if __name__ == '__main__':

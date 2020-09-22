@@ -31,9 +31,6 @@ class NeuroContainer:
         self.current_label = None
         self.network = None
         self.areas: List[NeuralArea] = []
-        # self.default_area = None
-        # self.phonological_memory: 'PhonologicalMemory' = None
-        # self.vocal_area: 'VocalArea' = None
 
     def append_neuron(self, neuron):
         self.neurons.append(neuron)
@@ -42,6 +39,7 @@ class NeuroContainer:
         self.areas.extend(areas)
 
     def add_area(self, area: 'NeuralArea'):
+        area.id = self.next_area_id()
         self.areas.append(area)
 
     def add_zone(self, zone: NeuralZone):
@@ -49,6 +47,12 @@ class NeuroContainer:
 
     def add_gate(self, gate: NeuralGate):
         self.gates.append(gate)
+
+    def find_zone(self, short_name: str) -> NeuralZone:
+        zones = [z for z in self.zones if z.short_name == short_name]
+        if zones:
+            return zones[0]
+        return None
 
     def create_neuron(self):
         neuron = Neuron(id=self.next_neuron_id(), container=self)
@@ -122,6 +126,11 @@ class NeuroContainer:
         if len(self.assemblies) == 0:
             return '1'
         return str(max([int(a.id) for a in self.assemblies]) + 1)
+
+    def next_area_id(self):
+        if len(self.areas) == 0:
+            return '1'
+        return str(max([int(a.id) for a in self.areas]) + 1)
 
     def next_sab_id(self):
         if len(self.sabs) == 0:
@@ -208,6 +217,9 @@ class NeuroContainer:
 
     def get_assembly_outgoing_connections(self, na: NeuralAssembly) -> List[Connection]:
         return [conn for conn in self.connections if conn.source == na]
+
+    def get_assembly_incoming_connections(self, na: NeuralAssembly) -> List[Connection]:
+        return [conn for conn in self.connections if conn.target == na]
 
     def get_incoming_connections(self, node):
         return [conn for conn in self.synapses if conn.target == node]

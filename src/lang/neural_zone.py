@@ -11,10 +11,19 @@ class NeuralZone:
         self.agent: 'Agent' = agent
         self.builder: 'AssemblyBuilder' = self.agent.assembly_builder
 
+    def build_predefined_assemblies(self):
+        pass
+
     def prepare_assemblies(self, source: AssemblySource, tick: int):
         pass
 
     def before_assemblies_update(self, tick: int):
+        pass
+
+    def receive_dope(self):
+        pass
+
+    def receive_cortisol(self):
         pass
 
     def _repr(self):

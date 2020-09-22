@@ -27,6 +27,7 @@ class PhoneticRecognitionArea(NeuralArea):
                 na.is_winner = True
 
     def on_fire(self, na: 'NeuralAssembly'):
+        super().on_fire(na)
         inhibited_areas = [a for a in self.agent.container.areas if self in a.inhibiting_areas]
         target_tick = self.agent.environment.current_tick + 1
         for area in inhibited_areas:

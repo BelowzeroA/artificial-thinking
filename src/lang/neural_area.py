@@ -10,18 +10,21 @@ class NeuralArea:
     Neural area contains neural assemblies and undermines their properties and connectivity with other assemblies
     """
     def __init__(self, name: str, agent: 'Agent', zone: 'NeuralZone'):
+        self.id = None
         self.name = name
         self.agent = agent
         self.zone = zone
         self.builder: 'AssemblyBuilder' = self.agent.assembly_builder
         self.modalities = []
         self.exciting_areas: List[NeuralArea] = []
+        self.tone_exciting_areas: List[NeuralArea] = []
         self.inhibiting_areas: List[NeuralArea] = []
         self.absorbs_dopamine = False
         self.winner_takes_it_all_strategy = False
         self.double_activation_from: List[NeuralArea] = []
         self.allows_assembly_merging = False
         self.allows_projection = False
+        self.sends_tone = False
         self.inhibited_at_ticks = []
 
     def corresponds_to_prefix(self, prefix: str) -> bool:
@@ -30,14 +33,24 @@ class NeuralArea:
     def add_exciting_area(self, area):
         self.exciting_areas.append(area)
 
+    def add_tone_exciting_area(self, area):
+        self.tone_exciting_areas.append(area)
+
     def add_inhibiting_area(self, area):
         self.inhibiting_areas.append(area)
 
     def connect_to(self, source_area: 'NeuralArea'):
         self.exciting_areas.append(source_area)
 
+    def get_assemblies(self):
+        return [a for a in self.agent.container.assemblies if a.area == self]
+
     def get_projected_areas(self):
         return [area for area in self.agent.container.areas if self in area.exciting_areas and area.allows_projection]
+
+    def get_tone_projected_areas(self):
+        return [area for area in self.agent.container.areas
+                if self in area.tone_exciting_areas and area.allows_projection]
 
     @classmethod
     def add(cls, name, agent, zone) -> 'NeuralArea':
@@ -47,10 +60,13 @@ class NeuralArea:
 
     def on_fire(self, na: NeuralAssembly):
         """
-        Abstract method to react on the event of a neural assembly firing
+        reacts on the event of a neural assembly firing
         :param na:
         """
-        pass
+        if self.sends_tone:
+            connections = self.agent.container.get_assembly_outgoing_connections(na=self)
+            for conn in connections:
+                conn.pulsing = True
 
     def handle_message(self, msg: InterAreaMessage):
         return False

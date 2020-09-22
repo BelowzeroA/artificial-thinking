@@ -12,8 +12,6 @@ class WorkingMemoryZone(NeuralZone):
     def __init__(self, agent: 'Agent'):
         super().__init__(name=type(self).__name__, agent=agent)
         self.num_units = 5
-        self.program_selector_area: SpeechProgramSelectorArea = None
-        self.action_area: SpeechProgramSelectorArea = None
         self._input_area = None
         self.prepare_areas()
 

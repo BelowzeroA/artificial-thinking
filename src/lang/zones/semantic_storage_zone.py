@@ -11,7 +11,7 @@ from lang.zones.visual_recognition_zone import VisualRecognitionZone
 class SemanticStorageZone(NeuralZone):
     """
     Takes input from phonetic and visual zones and builds a semantic world model
-    Corresponds to the Anterior Temporal Lobe
+    Corresponds to the Anterior Temporal Lobe (ATL)
     """
     def __init__(self, agent: 'Agent'):
         super().__init__(name=type(self).__name__, agent=agent)

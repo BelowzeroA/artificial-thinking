@@ -1,17 +1,14 @@
 from typing import List
 
 from lang.areas.semantic_storage_area import SemanticStorageArea
-from lang.areas.speech_program_selector_area import SpeechProgramSelectorArea
 from lang.assembly_source import AssemblySource
 from lang.neural_zone import NeuralZone
-from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
-from lang.zones.visual_recognition_zone import VisualRecognitionZone
 
 
 class VisualLexiconZone(NeuralZone):
     """
     Takes input from visual recognition and semantic storage zones and builds a lexicon of visual objects
-    Corresponds to the Posterior Middle Temporal Gyrus
+    Corresponds to the Posterior Superior Temporal Sulcus (pSTS)
     """
     def __init__(self, agent: 'Agent'):
         super().__init__(name=type(self).__name__, agent=agent)
@@ -39,6 +36,7 @@ class VisualLexiconZone(NeuralZone):
                 prev_area = self.areas[i - 1]
                 area.add_exciting_area(prev_area)
         self._output_area = area
+        self._output_area.sends_tone = True
 
     def output_areas(self):
         return [self._output_area]

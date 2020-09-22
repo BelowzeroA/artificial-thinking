@@ -1,5 +1,6 @@
 from typing import List, Set
 
+from lang.connection import Connection
 from lang.neural_area import NeuralArea
 
 
@@ -12,16 +13,28 @@ class NeuralGate:
         self.source = source
         self.target = target
         self.agent = agent
+        self.connection = None
         if source not in target.exciting_areas:
             raise ValueError(f'Areas {source} and {target} are not connected')
-        self.inhibited_at_ticks = []
+        self.open_at_ticks = []
 
-    @property
-    def is_open(self) -> bool:
-        return True
+    def is_open(self, connection: Connection) -> bool:
+        current_tick = self.agent.environment.current_tick
+        if current_tick in self.open_at_ticks:
+            return True
+        else:
+            # Workaround to make an assembly pass no matter what if a complete path
+            # of the assembly didn't make it yet to the final area
+            # TODO: remove this ugly crutch ASAP
+            final_area = self.agent.container.find_zone('SpProd').input_area
+            final_area_assemblies = final_area.get_assemblies()
+            ans = [an for an in final_area_assemblies if an.is_successor_of(connection.target)]
+            if not any(ans):
+                return True
+        return False
 
     def _repr(self):
-        return f'[{self.source} - {self.target}]'
+        return f'({self.source} - {self.target})'
 
     def __repr__(self):
         return self._repr()

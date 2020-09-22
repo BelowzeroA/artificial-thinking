@@ -1,3 +1,4 @@
+from lang.neural_area import NeuralArea
 from lang.neural_assembly import NeuralAssembly
 
 
@@ -13,6 +14,7 @@ class Connection:
         self.multiplier = 1
         self.gate_cached = False
         self.gate = None
+        self.delayed_activation_at = 0
 
     def get_opposite_connection(self):
         return self.container.get_connection(source=self.target, target=self.source)
@@ -20,19 +22,31 @@ class Connection:
     def _get_gate(self):
         if self.gate_cached:
             return self.gate
-        self.gate = self.container.get_neural_gate(self.source.area, self.target.area)
+        if issubclass(type(self.source), NeuralArea):
+            source_area = self.source
+        else:
+            source_area = self.source.area
+        self.gate = self.container.get_neural_gate(source_area, self.target.area)
         self.gate_cached = True
         return self.gate
 
     def update(self):
         self.pulsed = False
+        current_tick = self.target.area.agent.environment.current_tick
+        if not self.pulsing and self.delayed_activation_at == current_tick:
+            self.signal_target()
         if self.pulsing:
             gate = self._get_gate()
-            if gate is None or gate.is_open:
-                self.target.potential += self.multiplier
-                self.target.fired_contributors.append(self.source)
-            self.pulsing = False
+            if gate is None or gate.is_open(self):
+                self.signal_target()
+            elif gate is not None:
+                self.delayed_activation_at = current_tick + 4
             self.pulsed = True
+        self.pulsing = False
+
+    def signal_target(self):
+        self.target.potential += self.multiplier
+        self.target.fired_contributors.append(self.source)
 
     def serialize(self):
         _dict = {

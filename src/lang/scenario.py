@@ -9,5 +9,5 @@ class Scenario:
     def respond(self, inp: str):
         raise NotImplementedError('respond() must be overriden in descendant classes')
 
-    def cast_dope(self):
-        self.environment.spread_dope()
+    def cast_dope(self, agent):
+        self.environment.spread_dope(agent)

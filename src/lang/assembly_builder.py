@@ -97,11 +97,9 @@ class AssemblyBuilder:
 
     def _create_joint_assembly(self, nas: List[NeuralAssembly], area: NeuralArea) -> NeuralAssembly:
         pattern = self._make_joint_pattern(nas)
-        max_level_na = max(nas, key=lambda na: na.hierarchy_level)
         joint_na = self.find_create_assembly(pattern, area=area)
-        # joint_na.capacity = self._get_joint_capacity(nas)
         joint_na.is_joint = True
-        joint_na.hierarchy_level = max_level_na.hierarchy_level + 1
+        joint_na.source_assemblies.extend(nas)
         return joint_na
 
     @staticmethod
@@ -140,7 +138,6 @@ class AssemblyBuilder:
             na.area = area
             if prefix in PERCEPTUAL_PREFIXES:
                 na.perceptual = True
-                # na.capacity = HyperParameters.initial_receptive_assembly_capacity
         return na
 
     @staticmethod
@@ -151,23 +148,19 @@ class AssemblyBuilder:
             return pattern[:pattern.index(':')]
         return None
 
-    # def _find_create_assembly_chain(self, pattern: str, area: NeuralArea, capacity: int) -> NeuralAssembly:
-    #     na = self.find_create_assembly(pattern, area)
-    #     na.capacity = capacity
-    #     if na.area.create_linked_assembly:
-    #         linked_capacity = na.capacity // HyperParameters.linked_assembly_capacity_rate
-    #         hier_level = na.hierarchy_level - 1
-    #         if hier_level <= 0:
-    #             hier_level = 1
-    #         linked_capacity = linked_capacity // hier_level
-    #         if linked_capacity >= HyperParameters.minimal_capacity:
-    #             self._create_linked_assembly(source_na=na, capacity=linked_capacity)
-    #     return na
-
     def _create_projected_assembly(self, source_na: NeuralAssembly, area: NeuralArea) -> NeuralAssembly:
         na = self.find_create_assembly(source_na.pattern, area=area)
-        # linked1.fill_contributors([source_na])
+        na.source_assemblies.append(source_na)
         connection = self.check_create_connection(source=source_na, target=na)
+        connection.multiplier = 2
+        return na
+
+    def _create_projected_tone_assembly(self, source_area: NeuralArea, area: NeuralArea) -> NeuralAssembly:
+        pattern = f'{source_area.zone}: {source_area.name}'
+        na = self.find_create_assembly(pattern, area=area)
+        na.is_tone = True
+        na.source_area = source_area
+        connection = self.check_create_connection(source=source_area, target=na)
         connection.multiplier = 2
         return na
 
@@ -267,14 +260,14 @@ class AssemblyBuilder:
                 return target
         return None
 
-    @staticmethod
-    def _get_joint_capacity(ans: List[NeuralAssembly]) -> int:
-        sum = 0
-        for an in ans:
-            sum += an.capacity
-        return sum // len(ans)
-        min_capacity = min(cap1, cap2)
-        return int(min_capacity / HyperParameters.joint_capacity_denominator)
+    # @staticmethod
+    # def _get_joint_capacity(ans: List[NeuralAssembly]) -> int:
+    #     sum = 0
+    #     for an in ans:
+    #         sum += an.capacity
+    #     return sum // len(ans)
+    #     min_capacity = min(cap1, cap2)
+    #     return int(min_capacity / HyperParameters.joint_capacity_denominator)
 
     def _get_fired_assemblies(self):
         fired_assemblies: List[NeuralAssembly] = [na for na in self.container.assemblies if na.fired]
@@ -306,10 +299,6 @@ class AssemblyBuilder:
         if len(fired_assemblies) > 1:
             if self._get_joint_assembly(fired_assemblies):
                 return
-            # if all fired assemblies are perceptual, don't make a joint assembly
-            perceptual = [na for na in fired_assemblies if na.perceptual]
-            if len(perceptual) == len(fired_assemblies) and False:
-                return
             combinations = list(itertools.combinations(fired_assemblies, 2))
             for combination in combinations:
                 combination = list(combination)
@@ -321,11 +310,10 @@ class AssemblyBuilder:
                 if joint_area and joint_area.allows_assembly_merging:
                     joint_na = self._create_joint_assembly(combination, joint_area)
                     joint_na.formed_at = self.container.current_tick
-                    # joint_na.fill_contributors(combination)
                     for na in combination:
                         self.check_create_connection(na, joint_na)
-                    # self._create_linked_assembly(joint_na, capacity=joint_capacity)
-                    print(f'area {joint_area} joint assembly {joint_na} created')
+                    if self.agent.environment.verbosity > 0:
+                        print(f'area {joint_area} joint assembly {joint_na} created')
 
     def _get_common_projected_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
         areas = set([a.area for a in fired_assemblies])
@@ -364,18 +352,35 @@ class AssemblyBuilder:
                     continue
                 self._create_projected_assembly(source_na=na, area=projected_area)
 
+    def _build_linked_tone_assemblies(self):
+        """
+        builds linked assemblies if necessary.
+        Linked tone assembly is an assembly that fires one tick later after a tone signal sent by the master area
+        :return:
+        """
+        fired_areas = [na.area for na in self.container.assemblies if na.fired and na.area.sends_tone]
+        for area in fired_areas:
+            projected_areas = area.get_tone_projected_areas()
+            for projected_area in projected_areas:
+                already_connected = [na for na in self.container.assemblies
+                                     if na.area == projected_area and na.source_area == area]
+                if already_connected:
+                    continue
+                self._create_projected_tone_assembly(source_area=area, area=projected_area)
+
     def build_new_assemblies(self):
         self._build_linked_assemblies()
+        self._build_linked_tone_assemblies()
         self._build_joint_assemblies()
 
-    def prebuild_assemblies(self, phonological_memory: PhonologicalMemory, filename: str):
-        text_lines = load_list_from_file(filename)
-        overall_words = []
-        for line in text_lines:
-            line = clean_punctuation(line)
-            overall_words.extend(line.split())
-        for word in overall_words:
-            phonological_memory.build_phonemes_from_word(word)
+    # def prebuild_assemblies(self, phonological_memory: PhonologicalMemory, filename: str):
+    #     text_lines = load_list_from_file(filename)
+    #     overall_words = []
+    #     for line in text_lines:
+    #         line = clean_punctuation(line)
+    #         overall_words.extend(line.split())
+    #     for word in overall_words:
+    #         phonological_memory.build_phonemes_from_word(word)
 
 
 

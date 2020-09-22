@@ -10,6 +10,7 @@ class NeuralAssembly:
     def __init__(self, id: str, container):
         from neurons.neuro_container import NeuroContainer
         self.pattern: str = None
+        # self.phonetic_pattern: str = None
         self.id = id
         self.firing = False
         self.fired = False
@@ -17,6 +18,7 @@ class NeuralAssembly:
         self.perceptual = False
         self.is_combined = False
         self.is_joint = False
+        self.is_tone = False
         self.doped = False
         self.firing_ticks = []
         self.firing_history = {}
@@ -31,6 +33,8 @@ class NeuralAssembly:
         self.fired_contributors: List[NeuralAssembly] = []
         self._area: 'NeuralArea' = None
         self.is_winner = False # for Winner Takes It All Strategy areas
+        self.source_assemblies = []
+        self.source_area = None # for tone-bases assemblies
 
     @property
     def area(self):
@@ -42,7 +46,7 @@ class NeuralAssembly:
 
     @area.setter
     def area(self, val):
-        if self._area and self._area != self.container.default_area and self._area != val:
+        if self._area and self._area != val:
             raise Exception(f'NeuralAssembly.set_area(): The area of {self} is already set')
         self._area = val
         msg_data = {
@@ -89,18 +93,6 @@ class NeuralAssembly:
         self.potential = 0
         self.is_winner = False
 
-    # def fill_contributors(self, nas: List):
-    #     self.contributors.clear()
-    #     for na in nas:
-    #         self.contributors.append(na)
-    #     effective_contributors = []
-    #     for na in self.contributors:
-    #         if na.is_link and na.contributors[0] in self.contributors:
-    #             continue
-    #         effective_contributors.append(na)
-    #     if len(effective_contributors) > 2:
-    #         self.threshold = 3
-
     def on_doped(self, current_tick: int):
         """
         Invoked whenever dopamine reaches the assembly
@@ -122,6 +114,22 @@ class NeuralAssembly:
             if na.area in self.area.double_activation_from:
                 connection = self.container.get_connection_between_nodes(na, self)
                 connection.multiplier = 2
+
+    def is_successor_of(self, na: 'NeuralAssembly') -> bool:
+
+        def find_in_sources(assembly: 'NeuralAssembly') -> bool:
+            for a in assembly.source_assemblies:
+                if a == na:
+                    return True
+            for a in assembly.source_assemblies:
+                result = find_in_sources(a)
+                if result:
+                    return True
+            return False
+
+        if na == self:
+            return True
+        return find_in_sources(self)
 
     def _repr(self):
         return f'"{self.pattern}" id: {self.id}'
