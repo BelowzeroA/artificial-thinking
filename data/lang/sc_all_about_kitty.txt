@@ -1,20 +1,35 @@
 sc:PetRecognition
 
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+# v:kitty it's a kitty
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
+what is it
 what is it
 # kitty
 # v:kitty kitty has a tail

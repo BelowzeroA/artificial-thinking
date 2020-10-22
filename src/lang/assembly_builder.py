@@ -153,6 +153,7 @@ class AssemblyBuilder:
         na.source_assemblies.append(source_na)
         connection = self.check_create_connection(source=source_na, target=na)
         connection.multiplier = 2
+        area.on_assembly_created(na)
         return na
 
     def _create_projected_tone_assembly(self, source_area: NeuralArea, area: NeuralArea) -> NeuralAssembly:
@@ -306,21 +307,27 @@ class AssemblyBuilder:
                 downstream_assembly_existed = self._check_update_downstream_assembly(combination)
                 if downstream_assembly_existed:
                     continue
-                joint_area = self._get_common_projected_area(combination)
-                if joint_area and joint_area.allows_assembly_merging:
-                    joint_na = self._create_joint_assembly(combination, joint_area)
-                    joint_na.formed_at = self.container.current_tick
-                    for na in combination:
-                        self.check_create_connection(na, joint_na)
-                    if self.agent.environment.verbosity > 0:
-                        print(f'area {joint_area} joint assembly {joint_na} created')
+                joint_areas = self._get_common_projected_areas(combination)
+                for joint_area in joint_areas:
+                    if joint_area.allows_assembly_merging:
+                        joint_na = self._create_joint_assembly(combination, joint_area)
+                        joint_na.formed_at = self.container.current_tick
+                        for na in combination:
+                            self.check_create_connection(na, joint_na)
+                        if self.agent.environment.verbosity > 0:
+                            print(f'area {joint_area} joint assembly {joint_na} created')
 
-    def _get_common_projected_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
+    def _get_common_projected_areas(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
         areas = set([a.area for a in fired_assemblies])
-        for area in self.container.areas:
-            if areas.issubset(set(area.exciting_areas)):
-                return area
-        return None
+        common_areas = [area for area in self.container.areas if areas.issubset(set(area.exciting_areas))]
+        return common_areas
+
+    # def _get_common_projected_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
+    #     areas = set([a.area for a in fired_assemblies])
+    #     for area in self.container.areas:
+    #         if areas.issubset(set(area.exciting_areas)):
+    #             return area
+    #     return None
 
     def _check_update_downstream_assembly(self, fired_assemblies: List[NeuralAssembly]) -> bool:
         downstream_assembly = self._get_downstream_assembly(fired_assemblies)

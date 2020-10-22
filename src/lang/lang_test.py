@@ -11,7 +11,7 @@ def main():
     config = configs.MainConfig.__dict__
 
     env = Environment(**config)
-    env.verbosity = 0
+    env.verbosity = 1
     agent = Agent(environment=env, **config)
     env.add_agent(agent)
     env.run()

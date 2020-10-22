@@ -1,8 +1,5 @@
-import random
-
-from lang.hyperparameters import HyperParameters
 from lang.neural_area import NeuralArea
-from lang.primitives.inter_area_message import InterAreaMessage
+from lang.neural_assembly import NeuralAssembly
 
 
 class ObservationIntegratorArea(NeuralArea):
@@ -16,4 +13,10 @@ class ObservationIntegratorArea(NeuralArea):
 
     def before_assemblies_update(self, tick: int):
         pass
+
+    def on_fire(self, na: NeuralAssembly):
+        current_tick = self.agent.environment.current_tick
+        if current_tick not in na.firing_ticks:
+            na.firing_ticks.extend(range(current_tick + 1, current_tick + 3))
+
 

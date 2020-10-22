@@ -28,6 +28,7 @@ class SpeechControllerZone(NeuralZone):
     def prepare_areas(self):
         self.observation_integrator = ObservationIntegratorArea.add('observator', agent=self.agent, zone=self)
         self.dopamine_addict = DopamineAddictArea.add('dope_addict', agent=self.agent, zone=self)
+        self.dopamine_addict.add_exciting_area(self.observation_integrator)
         self.dopamine_anticipator = DopamineAnticipatorArea.add('dope_anticipator', agent=self.agent, zone=self)
         for i in range(self.num_areas):
             rule_area = RuleArea.add(f'rule{i}', agent=self.agent, zone=self)
@@ -43,6 +44,7 @@ class SpeechControllerZone(NeuralZone):
             inhibitor_area.rule_area = rule_area
             self.inhibitors.append(inhibitor_area)
             inhibitor_area.add_exciting_area(self.observation_integrator)
+            inhibitor_area.add_exciting_area(action_area)
 
             action_area.add_inhibiting_area(inhibitor_area)
             # rule_area.add_inhibiting_area(inhibitor_area)
@@ -69,7 +71,7 @@ class SpeechControllerZone(NeuralZone):
         pass
 
     def before_assemblies_update(self, tick: int):
-        self.dopamine_addict.before_assemblies_update(tick)
+        # self.dopamine_addict.before_assemblies_update(tick)
         self.dopamine_anticipator.before_assemblies_update(tick)
 
     def receive_dope(self):

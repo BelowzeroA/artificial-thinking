@@ -1,5 +1,6 @@
 from lang.areas.action_area import ActionArea
 from lang.areas.observation_integrator_area import ObservationIntegratorArea
+from lang.areas.rule_area import RuleArea
 from lang.hyperparameters import HyperParameters
 from lang.neural_area import NeuralArea
 from lang.neural_assembly import NeuralAssembly
@@ -23,7 +24,19 @@ class RuleInhibitorArea(NeuralArea):
         recently_active_rules = [na for na in self.agent.container.assemblies
                                  if na.last_fired_at >= current_tick - 1 and na.area == self.rule_area]
         for rule in recently_active_rules:
-            self.activate_inhibitor(rule)
+            self.deactivate_rule(rule)
+        recently_active_inhibitors = [na for na in self.agent.container.assemblies
+                                 if na.last_fired_at >= current_tick - 1 and na.area == self]
+        for inhibitor in recently_active_inhibitors:
+            self.activate_inhibitor(inhibitor)
+
+    def deactivate_rule(self, rule_assembly: NeuralAssembly):
+        rule_assembly.activated = False
+        connections = self.agent.container.get_assembly_incoming_connections(rule_assembly)
+        observation_rule_connections = [c for c in connections if isinstance(c.source.area, ObservationIntegratorArea)]
+        # Unilateral activation from an Observer
+        observation_rule_connections[0].multiplier = 1
+        print(f'rule {rule_assembly} deactivated')
 
     def activate_inhibitor(self, assembly: NeuralAssembly):
         connections = self.agent.container.get_assembly_incoming_connections(assembly)

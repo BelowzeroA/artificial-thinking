@@ -35,6 +35,7 @@ class NeuralAssembly:
         self.is_winner = False # for Winner Takes It All Strategy areas
         self.source_assemblies = []
         self.source_area = None # for tone-bases assemblies
+        self.activated = False
 
     @property
     def area(self):
@@ -88,8 +89,8 @@ class NeuralAssembly:
                 conn.pulsing = True
             self.firing_history[self.container.current_tick] = list(self.fired_contributors)
             area.on_fire(self)
-        else:
-            self.fired_contributors.clear()
+        # else:
+        self.fired_contributors.clear()
         self.potential = 0
         self.is_winner = False
 

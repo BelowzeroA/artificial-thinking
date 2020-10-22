@@ -46,7 +46,8 @@ class Connection:
 
     def signal_target(self):
         self.target.potential += self.multiplier
-        self.target.fired_contributors.append(self.source)
+        if self.multiplier > 0:
+            self.target.fired_contributors.append(self.source)
 
     def serialize(self):
         _dict = {

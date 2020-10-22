@@ -68,6 +68,23 @@ class NeuralArea:
             for conn in connections:
                 conn.pulsing = True
 
+    def check_set_is_winner(self, threshold: int):
+        assemblies = [na for na in self.agent.container.assemblies if na.area == self and na.potential > 0]
+        if assemblies:
+            assemblies_potentials = [(na, na.potential) for na in assemblies]
+            assemblies_potentials.sort(key=lambda x: x[1], reverse=True)
+            max_assembly_potential = assemblies_potentials[0]
+            if max_assembly_potential[1] >= threshold:
+                na = max_assembly_potential[0]
+                na.is_winner = True
+
+    def on_assembly_created(self, na: NeuralAssembly):
+        """
+        reacts on the event of a neural assembly having been added to the area
+        :param na:
+        """
+        pass
+
     def handle_message(self, msg: InterAreaMessage):
         return False
 
@@ -82,6 +99,12 @@ class NeuralArea:
     def build_structure(self):
         """
         Abstract method to build internal structure
+        """
+        pass
+
+    def before_assemblies_update(self, tick: int):
+        """
+        An event, fired before the overall assemblies update cycle
         """
         pass
 

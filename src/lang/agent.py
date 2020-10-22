@@ -5,6 +5,7 @@ from typing import List
 from lang.neural_gate import NeuralGate
 from lang.primitives.inter_area_message import InterAreaMessage
 from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
+from lang.zones.phrase_recognition_zone import PhraseRecognitionZone
 from lang.zones.semantic_storage_zone import SemanticStorageZone
 from lang.zones.speech_controller_zone import SpeechControllerZone
 from lang.zones.speech_production_zone import SpeechProductionZone
@@ -120,18 +121,6 @@ class Agent:
         if self.environment.verbosity > 0:
             self._report_fired_assemblies()
 
-    # def _check_run_dopamine_flood(self):
-    #     doped_assemblies = [na for na in self.container.assemblies if na.fired and na.doped]
-    #     not_doped_assemblies = [na for na in self.container.assemblies if na.fired and not na.doped]
-    #     if doped_assemblies:
-    #         for na in not_doped_assemblies:
-    #             if na.area.absorbs_dopamine:
-    #                 na.on_doped(self.current_tick)
-
-    # def _update_weights(self):
-    #     for neuron in self.container.neurons:
-    #         neuron.update_weights()
-
     def _report_fired_assemblies(self):
         for na in self.container.assemblies:
             if na.fired:
@@ -179,6 +168,10 @@ class Agent:
     def init_zones(self):
         # zones
         pr = PhoneticRecognitionZone(agent=self)
+        phrase_rec = PhraseRecognitionZone(agent=self)
+
+        phrase_rec.connect_to(pr)
+
         thought_controller = ThoughtControllerZone(agent=self)
         # syntax_production = SyntaxProductionZone(agent=self)
         vr = VisualRecognitionZone(agent=self)
@@ -196,6 +189,7 @@ class Agent:
 
         self.container.add_zone(vr)
         self.container.add_zone(pr)
+        self.container.add_zone(phrase_rec)
         self.container.add_zone(thought_controller)
         # self.container.add_zone(syntax_production)
         self.container.add_zone(semantic)
