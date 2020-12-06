@@ -156,14 +156,14 @@ class AssemblyBuilder:
         area.on_assembly_created(na)
         return na
 
-    def _create_projected_tone_assembly(self, source_area: NeuralArea, area: NeuralArea) -> NeuralAssembly:
-        pattern = f'{source_area.zone}: {source_area.name}'
-        na = self.find_create_assembly(pattern, area=area)
-        na.is_tone = True
-        na.source_area = source_area
-        connection = self.check_create_connection(source=source_area, target=na)
-        connection.multiplier = 2
-        return na
+    # def _create_projected_tone_assembly(self, source_area: NeuralArea, area: NeuralArea) -> NeuralAssembly:
+    #     pattern = f'{source_area.zone}: {source_area.name}'
+    #     na = self.find_create_assembly(pattern, area=area)
+    #     na.is_tone = True
+    #     na.source_area = source_area
+    #     connection = self.check_create_connection(source=source_area, target=na)
+    #     connection.multiplier = 2
+    #     return na
 
     def check_create_connection(self, source: NeuralAssembly, target: NeuralAssembly) -> Connection:
         connection = self.container.get_connection_between_nodes(source=source, target=target)
@@ -182,52 +182,6 @@ class AssemblyBuilder:
             overall_words.extend(line.split())
         for word in overall_words:
             self.build_phonemes_from_word(word)
-
-    # def build_phonemes_from_word_old(self, word: str, area, starting_tick: int):
-    #     build_chain = False
-    #     firing_count = HyperParameters.phonological_na_firing_count
-    #     if word in self.phonetics:
-    #         phonemes = self.phonetics[word]
-    #         if len(phonemes) > 1:
-    #             build_chain = True
-    #         else:
-    #             word = phonemes[0]
-    #
-    #     if build_chain:
-    #         for i in range(len(phonemes) - 1):
-    #             firing_ticks1 = [tick for tick in range(starting_tick + i, starting_tick + i + firing_count)]
-    #             na1 = self._find_create_assembly_chain(
-    #                 pattern=self._append_phoneme_prefix(phonemes[i]),
-    #                 area=area,
-    #                 capacity=HyperParameters.initial_receptive_assembly_capacity)
-    #
-    #             na1.firing_ticks.extend(firing_ticks1)
-    #             na1_linked = self._find_linked_assembly(na1)
-    #             na2 = self._find_create_assembly_chain(
-    #                 pattern=self._append_phoneme_prefix(phonemes[i + 1]),
-    #                 area=area,
-    #                 capacity=HyperParameters.initial_receptive_assembly_capacity)
-    #             firing_ticks2 = [tick for tick in range(starting_tick + i + 1, starting_tick + i + 1 + firing_count)]
-    #             na2.firing_ticks.extend(firing_ticks2)
-    #
-    #             combined_pattern = phonemes[i] + phonemes[i + 1]
-    #             combined_capacity = self._get_joint_capacity([na1_linked, na2])
-    #             combined_assembly = self._find_create_assembly_chain(
-    #                 pattern=combined_pattern,
-    #                 area=area,
-    #                 capacity=combined_capacity)
-    #             combined_assembly.fill_contributors([na1, na1_linked, na2])
-    #             combined_assembly.is_combined = True
-    #             self.check_create_connection(source=na1_linked, target=combined_assembly)
-    #             self.check_create_connection(source=na2, target=combined_assembly)
-    #     else:
-    #         na = self._find_create_assembly_chain(
-    #             pattern=self._append_phoneme_prefix(word),
-    #             area=area,
-    #             capacity=HyperParameters.initial_receptive_assembly_capacity)
-    #         firing_ticks = [tick for tick in range(starting_tick, starting_tick + firing_count)]
-    #         na.firing_ticks = firing_ticks
-    #         # self._create_linked_assembly(source_na=na, capacity=HyperParameters.initial_receptive_assembly_capacity)
 
     def build_phonemes_from_word(self, word: str, area, starting_tick: int):
         firing_count = HyperParameters.phonological_na_firing_count
@@ -261,15 +215,6 @@ class AssemblyBuilder:
                 return target
         return None
 
-    # @staticmethod
-    # def _get_joint_capacity(ans: List[NeuralAssembly]) -> int:
-    #     sum = 0
-    #     for an in ans:
-    #         sum += an.capacity
-    #     return sum // len(ans)
-    #     min_capacity = min(cap1, cap2)
-    #     return int(min_capacity / HyperParameters.joint_capacity_denominator)
-
     def _get_fired_assemblies(self):
         fired_assemblies: List[NeuralAssembly] = [na for na in self.container.assemblies if na.fired]
         lateral_assemblies = set()
@@ -277,8 +222,8 @@ class AssemblyBuilder:
             for contributor in na.contributors:
                 if contributor in fired_assemblies:
                     lateral_assemblies.add(contributor)
-        for na in lateral_assemblies:
-            del fired_assemblies[fired_assemblies.index(na)]
+        # for na in lateral_assemblies:
+        #     del fired_assemblies[fired_assemblies.index(na)]
         return fired_assemblies
 
     def _get_downstream_assembly(self, nas: List[NeuralAssembly]) -> NeuralAssembly:
@@ -322,13 +267,6 @@ class AssemblyBuilder:
         common_areas = [area for area in self.container.areas if areas.issubset(set(area.exciting_areas))]
         return common_areas
 
-    # def _get_common_projected_area(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
-    #     areas = set([a.area for a in fired_assemblies])
-    #     for area in self.container.areas:
-    #         if areas.issubset(set(area.exciting_areas)):
-    #             return area
-    #     return None
-
     def _check_update_downstream_assembly(self, fired_assemblies: List[NeuralAssembly]) -> bool:
         downstream_assembly = self._get_downstream_assembly(fired_assemblies)
         if downstream_assembly:
@@ -359,25 +297,25 @@ class AssemblyBuilder:
                     continue
                 self._create_projected_assembly(source_na=na, area=projected_area)
 
-    def _build_linked_tone_assemblies(self):
-        """
-        builds linked assemblies if necessary.
-        Linked tone assembly is an assembly that fires one tick later after a tone signal sent by the master area
-        :return:
-        """
-        fired_areas = [na.area for na in self.container.assemblies if na.fired and na.area.sends_tone]
-        for area in fired_areas:
-            projected_areas = area.get_tone_projected_areas()
-            for projected_area in projected_areas:
-                already_connected = [na for na in self.container.assemblies
-                                     if na.area == projected_area and na.source_area == area]
-                if already_connected:
-                    continue
-                self._create_projected_tone_assembly(source_area=area, area=projected_area)
+    # def _build_linked_tone_assemblies(self):
+    #     """
+    #     builds linked assemblies if necessary.
+    #     Linked tone assembly is an assembly that fires one tick later after a tone signal sent by the master area
+    #     :return:
+    #     """
+    #     fired_areas = [na.area for na in self.container.assemblies if na.fired and na.area.sends_tone]
+    #     for area in fired_areas:
+    #         projected_areas = area.get_tone_projected_areas()
+    #         for projected_area in projected_areas:
+    #             already_connected = [na for na in self.container.assemblies
+    #                                  if na.area == projected_area and na.source_area == area]
+    #             if already_connected:
+    #                 continue
+    #             self._create_projected_tone_assembly(source_area=area, area=projected_area)
 
     def build_new_assemblies(self):
         self._build_linked_assemblies()
-        self._build_linked_tone_assemblies()
+        # self._build_linked_tone_assemblies()
         self._build_joint_assemblies()
 
     # def prebuild_assemblies(self, phonological_memory: PhonologicalMemory, filename: str):

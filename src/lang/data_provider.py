@@ -6,35 +6,51 @@ from lang.configs import SCENARIO_PREFIX
 from lang.hyperparameters import HyperParameters
 
 comment_sign = '# '
+reward_line_prefix = '@'
 
 
 class DataProvider:
 
     def __init__(self, filename: str):
-        self._items = defaultdict(str)
+        self._items = {} #defaultdict(str)
         self.filename = filename
         self.scenario_length = 0
+        self._current_key_index = 0
         self._load_items()
 
     def _load_items(self):
         lines = load_list_from_file(self.filename)
         episode_counter = 0
-
+        current_reward_line = None
         for line in lines:
             line = line.strip()
             if not line:
                 continue
             if line.startswith(comment_sign):
                 continue
-            # colon_ind = line.index(':')
-            # index = int(line[:colon_ind])
-            # content = line[colon_ind + 1:].strip()
             if line.startswith(SCENARIO_PREFIX):
                 continue
+            if line.startswith(reward_line_prefix):
+                current_reward_line = line[2:]
+                continue
+
             index = episode_counter * HyperParameters.episode_length if episode_counter > 0 else 1
             episode_counter += 1
-            self._items[index] = AssemblySource(line)
+            self._items[index] = AssemblySource(line, current_reward_line)
+            current_reward_line = None
         self.scenario_length = episode_counter * HyperParameters.episode_length
 
     def __getitem__(self, i) -> AssemblySource:
-        return self._items[i]
+        return self._items[i] if i in self._items else None
+
+    def __iter__(self):
+        self._current_key_index = 0
+        return self
+
+    def __next__(self) -> int:
+        key_index = self._current_key_index
+        if key_index >= len(self._items):
+            raise StopIteration
+        item = list(self._items.keys())[key_index]
+        self._current_key_index += 1
+        return item

@@ -1,4 +1,7 @@
+from typing import List
+
 from lang.assembly_source import AssemblySource
+from lang.neural_area import NeuralArea
 
 
 class NeuralZone:
@@ -8,6 +11,7 @@ class NeuralZone:
     def __init__(self, name: str, agent: 'Agent'):
         self.name = name
         self.short_name = None
+        self.areas: List[NeuralArea] = []
         self.agent: 'Agent' = agent
         self.builder: 'AssemblyBuilder' = self.agent.assembly_builder
 
@@ -18,7 +22,8 @@ class NeuralZone:
         pass
 
     def before_assemblies_update(self, tick: int):
-        pass
+        for area in self.areas:
+            area.before_assemblies_update(tick)
 
     def receive_dope(self):
         pass

@@ -15,7 +15,6 @@ class PhoneticRecognitionZone(NeuralZone):
         super().__init__(name=type(self).__name__, agent=agent)
         self.short_name = 'PR'
         self.num_layers = 4
-        self.areas: List[PhoneticRecognitionArea] = []
         self.projected_areas: List[PhoneticRecognitionProjectedArea] = []
         self._input_area = None
         self._output_area = None
@@ -31,7 +30,6 @@ class PhoneticRecognitionZone(NeuralZone):
             prev_area = area if j == 0 else areas[j]
             projected_area.add_exciting_area(prev_area)
             areas.append(projected_area)
-        self.areas.append(area)
         return areas
 
     def prepare_areas(self):

@@ -4,9 +4,10 @@ from typing import List
 
 from lang.neural_gate import NeuralGate
 from lang.primitives.inter_area_message import InterAreaMessage
+from lang.zones.named_visual_objects_zone import NamedVisualObjectsZone
 from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
-from lang.zones.phrase_recognition_zone import PhraseRecognitionZone
-from lang.zones.semantic_storage_zone import SemanticStorageZone
+from lang.zones.phrase_encoder_zone import PhraseEncoderZone
+from lang.zones.phrase_integrator_zone import PhraseIntegratorZone
 from lang.zones.speech_controller_zone import SpeechControllerZone
 from lang.zones.speech_production_zone import SpeechProductionZone
 from lang.zones.syntax_production_zone import SyntaxProductionZone
@@ -28,36 +29,17 @@ class Agent:
         self.config = kwargs
         self.container = NeuroContainer(self)
 
-        self.container.network = self
+        # self.container.network = self
         dp = DataProvider(environment.filename)
         environment.scenario_length = dp.scenario_length
         self.assembly_builder = AssemblyBuilder(agent=self, data_provider=dp)
         self.samples = []
-        # self.current_tick = 0
-        self.num_epochs = 0
         self.environment = environment
         self.loop_ended = False
-        self._gaba_release = False
-        self._gaba_release_start_tick = 0
         self._messages = []
         self.init_zones()
         self.doped_ticks = []
         self.stressed_ticks = []
-
-    # @property
-    # def gaba_release(self):
-    #     """
-    #     Current state of GABA release
-    #     If True, on_negative_reward neurons may fire
-    #     :return:
-    #     """
-    #     return self._gaba_release
-
-    # @gaba_release.setter
-    # def gaba_release(self, val):
-    #     if not self._gaba_release and val:
-    #         self._gaba_release_start_tick = self.current_tick
-    #     self._gaba_release = val
 
     def reset(self):
         self.container.current_tick = 0
@@ -88,13 +70,13 @@ class Agent:
                     break
         self._messages.clear()
 
-    # def load_assemblies0(self):
-    #     self.assembly_builder.prepare_assemblies(self.environment.current_tick)
-
     def load_assemblies(self):
         current_tick = self.environment.current_tick
         assembly_source = self.assembly_builder.get_assembly_source(current_tick)
         if assembly_source:
+            if self.environment.verbosity > 0:
+                print()
+                print(f'Scenario line: {assembly_source.source_line}')
             for zone in self.container.zones:
                 zone.prepare_assemblies(assembly_source, current_tick)
 
@@ -146,6 +128,15 @@ class Agent:
             for zone in self.container.zones:
                 zone.receive_cortisol()
 
+    def current_assembly_source(self):
+        current_tick = self.environment.current_tick
+        assembly_source = None
+        for tick in self.assembly_builder.data_provider:
+            if tick > current_tick:
+                return assembly_source
+            assembly_source = self.assembly_builder.data_provider[tick]
+        return assembly_source
+
     def save_model(self, filename):
         out_val = {'neurons': self.container.neurons,
                    'synapses': self.container.synapses}
@@ -156,31 +147,25 @@ class Agent:
         repr = ' '.join([str(neuron) for neuron in self.container.neurons])
         return '{}: {}'.format(str(self.current_tick), repr)
 
-    def clear_state(self):
-        for neuron in self.container.neurons:
-            neuron.potential = 0
-            neuron.history.clear()
-        for synapse in self.container.synapses:
-            synapse.pulsing = False
-        for sab in self.container.sabs:
-            sab.history.clear()
-
     def init_zones(self):
         # zones
         pr = PhoneticRecognitionZone(agent=self)
-        phrase_rec = PhraseRecognitionZone(agent=self)
-
-        phrase_rec.connect_to(pr)
 
         thought_controller = ThoughtControllerZone(agent=self)
         # syntax_production = SyntaxProductionZone(agent=self)
         vr = VisualRecognitionZone(agent=self)
         vl = VisualLexiconZone(agent=self)
-        semantic = SemanticStorageZone(agent=self)
-        semantic.connect_to(vr, pr)
 
-        vl.connect_to([semantic, vr])
+        nvo = NamedVisualObjectsZone(agent=self)
+        nvo.connect_to(vr, pr)
 
+        vl.connect_to([nvo, vr])
+
+        phrase_integrator = PhraseIntegratorZone(agent=self)
+        phrase_integrator.connect_to(pr, nvo)
+
+        phrase_enc = PhraseEncoderZone(agent=self)
+        phrase_enc.connect_to(phrase_integrator)
         # syntax_production.connect_to([vl])
 
         speech_production = SpeechProductionZone(agent=self)
@@ -189,14 +174,15 @@ class Agent:
 
         self.container.add_zone(vr)
         self.container.add_zone(pr)
-        self.container.add_zone(phrase_rec)
+        self.container.add_zone(vl)
+        self.container.add_zone(phrase_enc)
+        self.container.add_zone(phrase_integrator)
         self.container.add_zone(thought_controller)
         # self.container.add_zone(syntax_production)
-        self.container.add_zone(semantic)
+        self.container.add_zone(nvo)
         self.container.add_zone(speech_production)
 
         # Gates
-        # vl_syntax_gate = NeuralGate(agent=self, source=vl.output_area, target=syntax_production.input_area)
         vl_syntax_gate = NeuralGate(agent=self, source=vl.output_area, target=speech_production.input_area)
         self.container.add_gate(vl_syntax_gate)
 
@@ -209,7 +195,8 @@ class Agent:
 
         # controller zones
         speech_controller = SpeechControllerZone(agent=self)
-        speech_controller.connect_to_sensors(vl.output_areas())
+
+        speech_controller.connect_to_sensors([vl.output_tone_area] + phrase_enc.output_areas())
         speech_controller.connect_to_gate(vl_syntax_gate)
         # speech_controller.connect_to_gate(br_speech_gate)
         self.container.add_zone(speech_controller)

@@ -17,7 +17,7 @@ class NeuralArea:
         self.builder: 'AssemblyBuilder' = self.agent.assembly_builder
         self.modalities = []
         self.exciting_areas: List[NeuralArea] = []
-        self.tone_exciting_areas: List[NeuralArea] = []
+        # self.tone_exciting_areas: List[NeuralArea] = []
         self.inhibiting_areas: List[NeuralArea] = []
         self.absorbs_dopamine = False
         self.winner_takes_it_all_strategy = False
@@ -48,14 +48,15 @@ class NeuralArea:
     def get_projected_areas(self):
         return [area for area in self.agent.container.areas if self in area.exciting_areas and area.allows_projection]
 
-    def get_tone_projected_areas(self):
-        return [area for area in self.agent.container.areas
-                if self in area.tone_exciting_areas and area.allows_projection]
+    # def get_tone_projected_areas(self):
+    #     return [area for area in self.agent.container.areas
+    #             if self in area.tone_exciting_areas and area.allows_projection]
 
     @classmethod
     def add(cls, name, agent, zone) -> 'NeuralArea':
         area = cls(name, agent, zone)
         agent.container.add_area(area)
+        zone.areas.append(area)
         return area
 
     def on_fire(self, na: NeuralAssembly):
@@ -63,10 +64,7 @@ class NeuralArea:
         reacts on the event of a neural assembly firing
         :param na:
         """
-        if self.sends_tone:
-            connections = self.agent.container.get_assembly_outgoing_connections(na=self)
-            for conn in connections:
-                conn.pulsing = True
+        pass
 
     def check_set_is_winner(self, threshold: int):
         assemblies = [na for na in self.agent.container.assemblies if na.area == self and na.potential > 0]

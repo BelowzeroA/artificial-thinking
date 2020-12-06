@@ -23,6 +23,7 @@ class SpeechControllerZone(NeuralZone):
         self.inhibitors = []
         self.dopamine_addict = None
         self.observation_integrator = None
+        self.dopamine_anticipator = None
         self.prepare_areas()
 
     def prepare_areas(self):
@@ -58,10 +59,7 @@ class SpeechControllerZone(NeuralZone):
 
     def connect_to_sensors(self, areas):
         for area in areas:
-            if area.sends_tone:
-                self.observation_integrator.add_tone_exciting_area(area)
-            else:
-                self.observation_integrator.add_exciting_area(area)
+            self.observation_integrator.add_exciting_area(area)
 
     def connect_to_gate(self, gate: NeuralGate):
         for action_area in self.actions:
@@ -71,8 +69,9 @@ class SpeechControllerZone(NeuralZone):
         pass
 
     def before_assemblies_update(self, tick: int):
-        # self.dopamine_addict.before_assemblies_update(tick)
+        #self.dopamine_addict.before_assemblies_update(tick)
         self.dopamine_anticipator.before_assemblies_update(tick)
+        self.observation_integrator.before_assemblies_update(tick)
 
     def receive_dope(self):
         self.dopamine_addict.receive_dope()
@@ -80,6 +79,5 @@ class SpeechControllerZone(NeuralZone):
             rule_area.receive_dope()
 
     def receive_cortisol(self):
-        # self.dopamine_addict.receive_dope()
         for inhibitor_area in self.inhibitors:
             inhibitor_area.receive_cortisol()

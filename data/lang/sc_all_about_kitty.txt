@@ -1,20 +1,62 @@
 sc:PetRecognition
 
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
-# v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+v:kitty it's a kitty
+
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+v:dog it's a dog
+
+v:dog dog has a tail
+v:dog dog has a tail
+v:dog dog has a tail
+v:dog dog has a tail
+v:dog dog has a tail
+v:dog dog has a tail
+v:dog dog has a tail
+v:dog dog has a tail
+
+v:kitty kitty has a tail
+v:kitty kitty has a tail
+v:kitty kitty has a tail
+v:kitty kitty has a tail
+v:kitty kitty has a tail
+v:kitty kitty has a tail
+
+v:kitty kitty said meow
+v:kitty kitty said meow
+v:kitty kitty said meow
+v:kitty kitty said meow
+v:kitty kitty said meow
+v:kitty kitty said meow
+v:kitty kitty said meow
+v:kitty kitty said meow
+
+v:dog dog has a tail
+v:dog dog has a tail
+
 what is it
 what is it
 what is it
@@ -31,7 +73,6 @@ what is it
 what is it
 what is it
 what is it
-# kitty
-# v:kitty kitty has a tail
-# v:kitty kitty is gone
-# v:kitty kitty says meow
+@ do, dog
+v:dog what is it
+v:kitty what is it

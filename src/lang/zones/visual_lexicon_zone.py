@@ -1,7 +1,7 @@
 from typing import List
 
-from lang.areas.semantic_storage_area import SemanticStorageArea
-from lang.assembly_source import AssemblySource
+from lang.areas.visual_lexicon_area import VisualLexiconArea
+from lang.areas.visual_lexicon_selector_area import VisualLexiconSelectorArea
 from lang.neural_zone import NeuralZone
 
 
@@ -14,9 +14,8 @@ class VisualLexiconZone(NeuralZone):
         super().__init__(name=type(self).__name__, agent=agent)
         self.short_name = 'VL'
         self.num_areas = 1
-        self.areas: List[SemanticStorageArea] = []
-        self._input_area: SemanticStorageArea = None
-        self._output_area: SemanticStorageArea = None
+        self._input_area: VisualLexiconArea = None
+        self._output_area: VisualLexiconSelectorArea = None
         self.prepare_areas()
 
     @property
@@ -24,32 +23,22 @@ class VisualLexiconZone(NeuralZone):
         return self._output_area
 
     def prepare_areas(self):
-        for i in range(self.num_areas):
-            area = SemanticStorageArea(f'area_{i}', self.agent, self)
-            area.allows_assembly_merging = True
-            self.agent.container.add_area(area)
-            if i == 0:
-                self._input_area = area
-                area.winner_takes_it_all_strategy = False
-            self.areas.append(area)
-            if i > 0:
-                prev_area = self.areas[i - 1]
-                area.add_exciting_area(prev_area)
-        self._output_area = area
-        self._output_area.sends_tone = True
+        self._input_area = VisualLexiconArea.add(f'area_1', self.agent, self)
+        self._output_area = VisualLexiconSelectorArea.add(f'output', self.agent, self)
+        self._output_area.add_exciting_area(self._input_area)
 
     def output_areas(self):
         return [self._output_area]
+
+    @property
+    def output_tone_area(self):
+        return self._output_area.tone_area
 
     def connect_to(self, zones: List[NeuralZone]):
         for zone in zones:
             for area in zone.output_areas():
                 self._input_area.connect_to(area)
 
-    def prepare_assemblies(self, source: AssemblySource, tick: int):
-        pass
-
     def before_assemblies_update(self, tick: int):
-        for area in self.areas[1:]:
-            area.before_assemblies_update(tick)
+        self._input_area.before_assemblies_update(tick)
         self._output_area.before_assemblies_update(tick)

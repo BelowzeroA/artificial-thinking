@@ -16,7 +16,6 @@ class VisualRecognitionZone(NeuralZone):
         super().__init__(name=type(self).__name__, agent=agent)
         self.short_name = 'VR'
         self.num_areas = 1
-        self.areas: List[VisualRecognitionArea] = []
         self._input_area: VisualRecognitionArea = None
         self.prepare_areas()
 
@@ -25,18 +24,12 @@ class VisualRecognitionZone(NeuralZone):
 
     def prepare_areas(self):
         for i in range(self.num_areas):
-            area = VisualRecognitionArea(f'area_{i}', self.agent, self)
-            self.agent.container.add_area(area)
+            area = VisualRecognitionArea.add(f'area_{i}', self.agent, self)
             if i == 0:
                 self._input_area = area
-            self.areas.append(area)
 
     def prepare_assemblies(self, source: AssemblySource, tick: int):
-        firing_span = [t + tick for t in range(HyperParameters.episode_length)]
+        firing_span = [t + tick for t in range(HyperParameters.episode_length - 5)]
         for vis in source.visuals:
             na = self.builder.find_create_assembly(pattern=vis, area=self._input_area)
             na.firing_ticks.extend(firing_span)
-
-    def before_assemblies_update(self, tick: int):
-        for area in self.areas[1:]:
-            area.before_assemblies_update(tick)
