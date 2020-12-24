@@ -12,6 +12,8 @@ def main():
 
     env = Environment(**config)
     env.verbosity = 1
+    env.reported_areas = ['[PhrInt:output]', '[NamedVO:output]']
+
     agent = Agent(environment=env, **config)
     env.add_agent(agent)
     env.run()

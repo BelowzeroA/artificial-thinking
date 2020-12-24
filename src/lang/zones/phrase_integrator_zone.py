@@ -7,7 +7,7 @@ from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
 
 class PhraseIntegratorZone(NeuralZone):
     """
-    Integrates streams from Phonetic recognizer and Named visual objects zones
+    Integrates the streams from Phonetic recognizer and Named visual objects zones
     """
     def __init__(self, agent: 'Agent'):
         super().__init__(name=type(self).__name__, agent=agent)

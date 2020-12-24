@@ -76,3 +76,4 @@ what is it
 @ do, dog
 v:dog what is it
 v:kitty what is it
+v:kitty what is kitty doing

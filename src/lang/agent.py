@@ -106,10 +106,11 @@ class Agent:
     def _report_fired_assemblies(self):
         for na in self.container.assemblies:
             if na.fired:
-                print(f'area {na.area} assembly {na} fired')
+                self.environment.report_on_area(na.area, f'area {na.area} assembly {na} fired')
+
         for area in self.container.areas:
             if self.environment.current_tick in area.inhibited_at_ticks:
-                print(f'area {area} is inhibited')
+                self.environment.report_on_area(area, f'area {area} is inhibited')
 
     def utter(self, utterance: str):
         self.environment.receive_utterance(self, utterance)

@@ -2,6 +2,7 @@ import importlib
 
 from common.file_ops import load_list_from_file
 from lang.configs import SCENARIO_PREFIX
+from lang.neural_area import NeuralArea
 
 
 class Environment:
@@ -18,6 +19,7 @@ class Environment:
         # how many ticks the scenario will take
         self.scenario_length = 0
         self.verbosity = 1
+        self.reported_areas = []
         self._load_scenarios()
 
     def load(self):
@@ -70,6 +72,12 @@ class Environment:
     def build_predefined_assemblies(self):
         for agent in self.agents:
             agent.build_predefined_assemblies()
+
+    def report_on_area(self, area: NeuralArea, text: str):
+        if self.verbosity == 0:
+            return
+        if len(self.reported_areas) == 0 or str(area) in self.reported_areas:
+            print(text)
 
     def run(self):
         self.loop_ended = False

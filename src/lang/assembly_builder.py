@@ -136,6 +136,8 @@ class AssemblyBuilder:
             if area is None:
                 raise ValueError(f'No area found for prefix "{prefix}"')
             na.area = area
+            if area.sends_tone:
+                na.is_tone = True
             if prefix in PERCEPTUAL_PREFIXES:
                 na.perceptual = True
         return na
@@ -155,15 +157,6 @@ class AssemblyBuilder:
         connection.multiplier = 2
         area.on_assembly_created(na)
         return na
-
-    # def _create_projected_tone_assembly(self, source_area: NeuralArea, area: NeuralArea) -> NeuralAssembly:
-    #     pattern = f'{source_area.zone}: {source_area.name}'
-    #     na = self.find_create_assembly(pattern, area=area)
-    #     na.is_tone = True
-    #     na.source_area = source_area
-    #     connection = self.check_create_connection(source=source_area, target=na)
-    #     connection.multiplier = 2
-    #     return na
 
     def check_create_connection(self, source: NeuralAssembly, target: NeuralAssembly) -> Connection:
         connection = self.container.get_connection_between_nodes(source=source, target=target)
@@ -259,8 +252,11 @@ class AssemblyBuilder:
                         joint_na.formed_at = self.container.current_tick
                         for na in combination:
                             self.check_create_connection(na, joint_na)
-                        if self.agent.environment.verbosity > 0:
-                            print(f'area {joint_area} joint assembly {joint_na} created')
+
+                        self.agent.environment.report_on_area(
+                            joint_area,
+                            f'area {joint_area} joint assembly {joint_na} created'
+                        )
 
     def _get_common_projected_areas(self, fired_assemblies: List[NeuralAssembly]) -> NeuralArea:
         areas = set([a.area for a in fired_assemblies])
