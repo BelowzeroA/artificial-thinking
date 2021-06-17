@@ -1,5 +1,4 @@
-# from lang.areas.visual_lexicon_output_tone_area import VisualLexiconOutputToneArea
-from lang.areas.named_visual_objects_output_tone_area import NamedVisualObjectsOutputToneArea
+from lang.areas.named_visual_objects.named_visual_objects_output_tone_area import NamedVisualObjectsOutputToneArea
 from lang.hyperparameters import HyperParameters
 from lang.neural_area import NeuralArea
 from lang.neural_assembly import NeuralAssembly

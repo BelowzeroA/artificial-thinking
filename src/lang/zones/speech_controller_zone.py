@@ -4,7 +4,6 @@ from lang.areas.dopamine_anticipator_area import DopamineAnticipatorArea
 from lang.areas.observation_integrator_area import ObservationIntegratorArea
 from lang.areas.rule_area import RuleArea
 from lang.areas.rule_inhibitor_area import RuleInhibitorArea
-from lang.areas.speech_program_selector_area import SpeechProgramSelectorArea
 from lang.neural_gate import NeuralGate
 from lang.neural_zone import NeuralZone
 

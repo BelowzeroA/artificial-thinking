@@ -1,79 +1,34 @@
 sc:PetRecognition
 
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
-v:kitty it's a kitty
+@for(16)
 v:kitty it's a kitty
 
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
-v:dog it's a dog
+@for(12)
 v:dog it's a dog
 
-v:dog dog has a tail
-v:dog dog has a tail
-v:dog dog has a tail
-v:dog dog has a tail
-v:dog dog has a tail
-v:dog dog has a tail
-v:dog dog has a tail
+@for(8)
 v:dog dog has a tail
 
-v:kitty kitty has a tail
-v:kitty kitty has a tail
-v:kitty kitty has a tail
-v:kitty kitty has a tail
-v:kitty kitty has a tail
+@for(8)
 v:kitty kitty has a tail
 
-v:kitty kitty said meow
-v:kitty kitty said meow
-v:kitty kitty said meow
-v:kitty kitty said meow
-v:kitty kitty said meow
-v:kitty kitty said meow
-v:kitty kitty said meow
+@for(8)
 v:kitty kitty said meow
 
-v:dog dog has a tail
+@for(8)
 v:dog dog has a tail
 
+@for(16)
+doing
+
+@for(16)
 what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-what is it
-@ do, dog
+
+@dope do, dog
 v:dog what is it
 v:kitty what is it
-v:kitty what is kitty doing
+
+@for(12)
+[{"object": "kitty", "action": "walking"}] kitty is walking
+
+[{"object": "kitty", "action": "walking"}] what is kitty doing

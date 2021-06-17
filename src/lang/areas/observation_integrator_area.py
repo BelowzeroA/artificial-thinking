@@ -20,6 +20,7 @@ class ObservationIntegratorArea(NeuralArea):
         self.check_set_is_winner(threshold=HyperParameters.phonetic_recognition_threshold)
 
     def on_fire(self, na: NeuralAssembly):
+        self.zone.on_observation_arrive(na)
         # implements a prolonged firing pattern
         current_tick = self.agent.environment.current_tick
         if current_tick not in na.firing_ticks:

@@ -34,20 +34,24 @@ class Connection:
         self.pulsed = False
         current_tick = self.target.area.agent.environment.current_tick
         if not self.pulsing and self.delayed_activation_at == current_tick:
-            self.signal_target()
+            # disabled until the logic of delayed activation is discovered
+            pass
+            # self.signal_target()
         if self.pulsing:
             gate = self._get_gate()
             if gate is None or gate.is_open(self):
-                self.signal_target()
+                self.signal_target(gate)
             elif gate is not None:
                 self.delayed_activation_at = current_tick + 4
             self.pulsed = True
         self.pulsing = False
 
-    def signal_target(self):
+    def signal_target(self, gate):
         self.target.potential += self.multiplier
         if self.multiplier > 0:
             self.target.fired_contributors.append(self.source)
+            if gate:
+                gate.on_assembly_pass(self.target)
 
     def serialize(self):
         _dict = {

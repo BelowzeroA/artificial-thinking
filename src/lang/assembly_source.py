@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 
@@ -9,7 +10,8 @@ class AssemblySource:
     Represents raw data of a neural assembly
     """
     def __init__(self, source_line: str, reward_line: str):
-        self.source_line = source_line
+        self.source_line = source_line.strip()
+        self.scene = None
         self.visuals: List[str] = []
         self.actions: List[str] = []
         self.observations: List[str] = []
@@ -19,6 +21,10 @@ class AssemblySource:
         self._parse()
 
     def _parse(self):
+        if self.source_line.startswith('['):
+            scene_piece = self.source_line[:self.source_line.rfind(']') + 1]
+            self.scene = json.loads(scene_piece)
+            self.source_line = self.source_line[len(scene_piece) + 1:].strip()
         parts = self.source_line.split()
         for part in parts:
             if part.startswith('v:'):

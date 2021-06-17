@@ -37,7 +37,6 @@ class ReceptiveLayer(Layer):
         self.pixels_map = {}
         self.firing_history = {}
 
-
     def attach_image(self, img: Image):
         self.img = img
         for neuron in self.neurons:
@@ -49,7 +48,6 @@ class ReceptiveLayer(Layer):
             self._allocate_vertical_line(img, x)
         for x in range(img.width):
             self._allocate_right_45(img, x)
-
 
     def _create_pixels_2_neurons_map(self):
         width_pixel_map = {}
@@ -75,13 +73,11 @@ class ReceptiveLayer(Layer):
                         coord = Coord(x=x, y=y)
                         self.pixels_map[coord] = Coord(x=neuron_x, y=neuron_y)
 
-
     def _pad_pixel_map(self, pixel_map, img_dim, grid_dim):
         diff = grid_dim - img_dim
         diff_half = int(diff / 2)
         for pixel in range(img_dim):
             pixel_map[pixel] = pixel + diff_half
-
 
     def _fill_pixel_map(self, pixel_map, img_dim, grid_dim):
         diff = img_dim - grid_dim
@@ -102,7 +98,6 @@ class ReceptiveLayer(Layer):
         neuron_counter = self._map_pixels_on_interval(pixel_map, img_dim, img_dim - third_of_half, img_dim - 1,
                                                       diff_for_edge, neuron_counter)
 
-
     def _map_pixels_on_interval(self, pixel_map, img_dim, interval_start, interval_end, num_skips, neuron_counter):
         num_neurons = interval_end - interval_start - num_skips + 1
         if num_neurons > num_skips:
@@ -121,7 +116,6 @@ class ReceptiveLayer(Layer):
                 pixel_map[pixel_index] = value
                 index += 1
         return neuron_counter
-
 
     @staticmethod
     def _allocate_neurons_among_skips(interval_start, interval_end, num_allocated, num_rest):
@@ -145,14 +139,12 @@ class ReceptiveLayer(Layer):
                 allocation.append(0)
         return allocation
 
-
     def allocate(self):
         ors = [Orientation.__dict__[key] for key in Orientation.__dict__ if not key.startswith('_')]
         for x_coord in range(self.width):
             for y_coord in range(self.height):
                 for orientation in ors:
                     self._allocate_neuron(x_coord, y_coord, orientation)
-
 
     def _allocate_neuron(self, x, y, orientation):
         from vision.receptive_neuron import ReceptiveNeuron
@@ -168,7 +160,6 @@ class ReceptiveLayer(Layer):
         self.neurons.append(neuron)
         return neuron
 
-
     def get_firing_map(self, orientation):
         arr = np.zeros(shape=(self.height, self.width))
         for neuron in self.neurons:
@@ -176,13 +167,11 @@ class ReceptiveLayer(Layer):
                 arr[neuron.coord.y, neuron.coord.x] = 1
         return arr
 
-
     def on_neuron_firing(self, neuron):
         if neuron in self.firing_history:
             self.firing_history[neuron] += 1
         else:
             self.firing_history[neuron] = 1
-
 
     def _get_neuron_clear(self, x, y, orientation):
         coord = Coord(x=x, y=y)
@@ -194,13 +183,11 @@ class ReceptiveLayer(Layer):
         neuron.receptive_field.clear()
         return neuron
 
-
     def _get_neuron_clear0(self, x, y, orientation):
         neurons = [n for n in self.neurons if n.coord.x == x and n.coord.y == y and n.orientation == orientation]
         neuron = neurons[0]
         neuron.receptive_field.clear()
         return neuron
-
 
     def _allocate_horizontal_line(self, img: Image, y_coord):
         stride = img.width / self.width
@@ -217,7 +204,6 @@ class ReceptiveLayer(Layer):
                     break
                 neuron.receptive_field.append(Coord(x=x_coord, y=y_coord))
 
-
     def _allocate_vertical_line(self, img: Image, x_coord):
         stride = img.height / self.height
         stride = 1 if stride < 1 else int(stride)
@@ -232,7 +218,6 @@ class ReceptiveLayer(Layer):
                 if y_coord >= img.height:
                     break
                 neuron.receptive_field.append(Coord(x=x_coord, y=y_coord))
-
 
     def _allocate_right_45(self, img: Image, x_coord):
         stride = img.height / self.height
@@ -252,7 +237,6 @@ class ReceptiveLayer(Layer):
                 if receptive_y < 0 or receptive_x >= img.width or receptive_y >= img.height:
                     break
                 neuron.receptive_field.append(Coord(x=receptive_x, y=receptive_y))
-
 
     def fire_random_pattern(self, pattern_key: int):
         random.seed(pattern_key)

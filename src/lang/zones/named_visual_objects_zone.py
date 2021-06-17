@@ -1,10 +1,6 @@
-from typing import List
-
 # from lang.areas.semantic_storage_area import SemanticStorageArea
-from lang.areas.named_visual_objects_area import NamedVisualObjectsArea
-from lang.areas.named_visual_objects_selector_area import NamedVisualObjectsSelectorArea
-from lang.areas.speech_program_selector_area import SpeechProgramSelectorArea
-from lang.assembly_source import AssemblySource
+from lang.areas.named_visual_objects.named_visual_objects_area import NamedVisualObjectsArea
+from lang.areas.named_visual_objects.named_visual_objects_selector_area import NamedVisualObjectsSelectorArea
 from lang.neural_zone import NeuralZone
 from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
 from lang.zones.visual_recognition_zone import VisualRecognitionZone

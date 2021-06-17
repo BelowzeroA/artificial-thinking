@@ -1,13 +1,13 @@
 from typing import List
 
-from lang.areas.visual_lexicon_area import VisualLexiconArea
-from lang.areas.visual_lexicon_selector_area import VisualLexiconSelectorArea
+from lang.areas.visual_lexicon.visual_lexicon_area import VisualLexiconArea
+from lang.areas.visual_lexicon.visual_lexicon_selector_area import VisualLexiconSelectorArea
 from lang.neural_zone import NeuralZone
 
 
 class VisualLexiconZone(NeuralZone):
     """
-    Takes input from visual recognition and semantic storage zones and builds a lexicon of visual objects
+    Takes input from Visual Recognition and Named Visual Objects zones and builds a lexicon of visual objects
     Corresponds to the Posterior Superior Temporal Sulcus (pSTS)
     """
     def __init__(self, agent: 'Agent'):
@@ -39,6 +39,6 @@ class VisualLexiconZone(NeuralZone):
             for area in zone.output_areas():
                 self._input_area.connect_to(area)
 
-    def before_assemblies_update(self, tick: int):
-        self._input_area.before_assemblies_update(tick)
-        self._output_area.before_assemblies_update(tick)
+    # def before_assemblies_update(self, tick: int):
+    #     self._input_area.before_assemblies_update(tick)
+    #     self._output_area.before_assemblies_update(tick)

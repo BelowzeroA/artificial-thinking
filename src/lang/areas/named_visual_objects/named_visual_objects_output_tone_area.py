@@ -1,4 +1,3 @@
-from lang.hyperparameters import HyperParameters
 from lang.neural_area import NeuralArea
 
 

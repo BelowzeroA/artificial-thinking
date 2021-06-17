@@ -1,17 +1,15 @@
-import importlib
-
-from typing import List
 
 from lang.neural_gate import NeuralGate
 from lang.primitives.inter_area_message import InterAreaMessage
+from lang.zones.controller_zone import ControllerZone
 from lang.zones.named_visual_objects_zone import NamedVisualObjectsZone
 from lang.zones.phonetic_recognition_zone import PhoneticRecognitionZone
 from lang.zones.phrase_encoder_zone import PhraseEncoderZone
 from lang.zones.phrase_integrator_zone import PhraseIntegratorZone
+from lang.zones.phrase_repeater_controller_zone import PhraseRepeaterControllerZone
 from lang.zones.speech_controller_zone import SpeechControllerZone
 from lang.zones.speech_production_zone import SpeechProductionZone
-from lang.zones.syntax_production_zone import SyntaxProductionZone
-from lang.zones.thought_controller_zone import ThoughtControllerZone
+from lang.zones.visual_lexicon_controller_zone import VisualLexiconControllerZone
 from lang.zones.visual_lexicon_zone import VisualLexiconZone
 from lang.zones.visual_recognition_zone import VisualRecognitionZone
 from common.json_serializer import json_serialize
@@ -28,8 +26,6 @@ class Agent:
         from lang.assembly_builder import AssemblyBuilder
         self.config = kwargs
         self.container = NeuroContainer(self)
-
-        # self.container.network = self
         dp = DataProvider(environment.filename)
         environment.scenario_length = dp.scenario_length
         self.assembly_builder = AssemblyBuilder(agent=self, data_provider=dp)
@@ -151,9 +147,6 @@ class Agent:
     def init_zones(self):
         # zones
         pr = PhoneticRecognitionZone(agent=self)
-
-        thought_controller = ThoughtControllerZone(agent=self)
-        # syntax_production = SyntaxProductionZone(agent=self)
         vr = VisualRecognitionZone(agent=self)
         vl = VisualLexiconZone(agent=self)
 
@@ -167,10 +160,8 @@ class Agent:
 
         phrase_enc = PhraseEncoderZone(agent=self)
         phrase_enc.connect_to(phrase_integrator)
-        # syntax_production.connect_to([vl])
 
         speech_production = SpeechProductionZone(agent=self)
-        # speech_production.connect_to([syntax_production])
         speech_production.connect_to([vl])
 
         self.container.add_zone(vr)
@@ -178,8 +169,6 @@ class Agent:
         self.container.add_zone(vl)
         self.container.add_zone(phrase_enc)
         self.container.add_zone(phrase_integrator)
-        self.container.add_zone(thought_controller)
-        # self.container.add_zone(syntax_production)
         self.container.add_zone(nvo)
         self.container.add_zone(speech_production)
 
@@ -187,18 +176,19 @@ class Agent:
         vl_syntax_gate = NeuralGate(agent=self, source=vl.output_area, target=speech_production.input_area)
         self.container.add_gate(vl_syntax_gate)
 
-        # br_speech_gate = NeuralGate(
-        #     agent=self,
-        #     source=syntax_production.output_areas()[0],
-        #     target=speech_production.input_area
-        # )
-        # self.container.add_gate(br_speech_gate)
-
         # controller zones
-        speech_controller = SpeechControllerZone(agent=self)
+        # speech_controller = SpeechControllerZone(agent=self)
+        phrase_repeater_controller = PhraseRepeaterControllerZone(agent=self)
+        phrase_repeater_controller.connect_to_sensors(pr.output_areas())
+        speech_production.connect_to([phrase_repeater_controller])
+        self.container.add_zone(phrase_repeater_controller)
 
-        speech_controller.connect_to_sensors([vl.output_tone_area] + phrase_enc.output_areas())
-        speech_controller.connect_to_gate(vl_syntax_gate)
-        # speech_controller.connect_to_gate(br_speech_gate)
-        self.container.add_zone(speech_controller)
+        vl_controller = VisualLexiconControllerZone(agent=self)
+        vl_controller.connect_to_sensors([vl.output_tone_area])
+        vl_controller.connect_to_gate(vl_syntax_gate)
+        vl_controller.connect_to_master_action(phrase_repeater_controller)
+        self.container.add_zone(vl_controller)
+        # speech_controller.connect_to_sensors([vl.output_tone_area] + phrase_enc.output_areas())
+
+
 

@@ -150,7 +150,7 @@ class AssemblyBuilder:
             return pattern[:pattern.index(':')]
         return None
 
-    def _create_projected_assembly(self, source_na: NeuralAssembly, area: NeuralArea) -> NeuralAssembly:
+    def create_projected_assembly(self, source_na: NeuralAssembly, area: NeuralArea) -> NeuralAssembly:
         na = self.find_create_assembly(source_na.pattern, area=area)
         na.source_assemblies.append(source_na)
         connection = self.check_create_connection(source=source_na, target=na)
@@ -291,7 +291,7 @@ class AssemblyBuilder:
                 already_connected = [assembly for assembly in connected_assemblies if assembly.area == projected_area]
                 if already_connected:
                     continue
-                self._create_projected_assembly(source_na=na, area=projected_area)
+                self.create_projected_assembly(source_na=na, area=projected_area)
 
     # def _build_linked_tone_assemblies(self):
     #     """
@@ -311,17 +311,4 @@ class AssemblyBuilder:
 
     def build_new_assemblies(self):
         self._build_linked_assemblies()
-        # self._build_linked_tone_assemblies()
         self._build_joint_assemblies()
-
-    # def prebuild_assemblies(self, phonological_memory: PhonologicalMemory, filename: str):
-    #     text_lines = load_list_from_file(filename)
-    #     overall_words = []
-    #     for line in text_lines:
-    #         line = clean_punctuation(line)
-    #         overall_words.extend(line.split())
-    #     for word in overall_words:
-    #         phonological_memory.build_phonemes_from_word(word)
-
-
-

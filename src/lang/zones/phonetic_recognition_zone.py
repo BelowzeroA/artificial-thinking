@@ -1,7 +1,7 @@
 from typing import List
 
-from lang.areas.phonetic_recognition_area import PhoneticRecognitionArea
-from lang.areas.phonetic_recognition_projected_area import PhoneticRecognitionProjectedArea
+from lang.areas.phonetic_recognition.phonetic_recognition_area import PhoneticRecognitionArea
+from lang.areas.phonetic_recognition.phonetic_recognition_projected_area import PhoneticRecognitionProjectedArea
 from lang.assembly_source import AssemblySource
 from lang.neural_zone import NeuralZone
 

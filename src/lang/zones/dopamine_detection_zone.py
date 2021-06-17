@@ -1,6 +1,3 @@
-from lang.areas.action_area import ActionArea
-from lang.areas.rule_area import RuleArea
-from lang.areas.speech_program_selector_area import SpeechProgramSelectorArea
 from lang.neural_zone import NeuralZone
 
 

@@ -2,6 +2,7 @@ from typing import List, Set
 
 from lang.connection import Connection
 from lang.neural_area import NeuralArea
+from lang.neural_assembly import NeuralAssembly
 
 
 class NeuralGate:
@@ -14,6 +15,7 @@ class NeuralGate:
         self.target = target
         self.agent = agent
         self.connection = None
+        self.controller = None
         if source not in target.exciting_areas:
             raise ValueError(f'Areas {source} and {target} are not connected')
         self.open_at_ticks = []
@@ -23,7 +25,7 @@ class NeuralGate:
         if current_tick in self.open_at_ticks:
             return True
         else:
-            # Workaround to make an assembly pass no matter what if a complete path
+            # Workaround to let an assembly pass no matter what if a complete path
             # of the assembly didn't make it yet to the final area
             # TODO: remove this ugly crutch ASAP
             final_area = self.agent.container.find_zone('SpProd').input_area
@@ -32,6 +34,10 @@ class NeuralGate:
             if not any(ans):
                 return True
         return False
+
+    def on_assembly_pass(self, na: NeuralAssembly):
+        if self.controller:
+            self.controller.on_assembly_pass(na)
 
     def _repr(self):
         return f'({self.source} - {self.target})'

@@ -96,6 +96,24 @@ class NeuralAssembly:
         self.firing_history[current_tick] = list(self.fired_contributors)
         self.area.on_fire(self)
 
+    def get_phonetic_pattern(self) -> str:
+
+        def _get_phonetic_pattern(assembly):
+            if len(assembly.source_assemblies) == 2:
+                phonetic_assemblies = [na for na in assembly.source_assemblies if na.area.zone.short_name != 'VR']
+                if len(phonetic_assemblies) == 2:
+                    return assembly.pattern
+                elif len(phonetic_assemblies) == 1:
+                    return _get_phonetic_pattern(phonetic_assemblies[0])
+                else:
+                    return None
+            elif len(assembly.source_assemblies) == 1:
+                return _get_phonetic_pattern(assembly.source_assemblies[0])
+            else:
+                return assembly.pattern
+
+        return _get_phonetic_pattern(self)
+
     def is_successor_of(self, na: 'NeuralAssembly') -> bool:
 
         def find_in_sources(assembly: 'NeuralAssembly') -> bool:
